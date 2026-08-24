@@ -1,0 +1,10 @@
+[
+  {"id":"ORD-10394","customer":"Nordic Retail Group","items":18,"total":68400,"status":"Processing","date":"2026-08-24","region":"Europe","contact":"procurement@nordicretail.example"},
+  {"id":"ORD-10391","customer":"Pacific Home Co.","items":9,"total":42750,"status":"Shipped","date":"2026-08-24","region":"APAC","contact":"ops@pacifichome.example"},
+  {"id":"ORD-10387","customer":"Atlas Industrial","items":26,"total":116800,"status":"Pending","date":"2026-08-23","region":"Middle East","contact":"orders@atlasindustrial.example"},
+  {"id":"ORD-10382","customer":"Maple Distribution","items":12,"total":53990,"status":"Delivered","date":"2026-08-23","region":"North America","contact":"supply@mapledist.example"},
+  {"id":"ORD-10374","customer":"Southern Cross Trading","items":7,"total":31920,"status":"Processing","date":"2026-08-22","region":"Oceania","contact":"trade@southerncross.example"},
+  {"id":"ORD-10368","customer":"Alpine Components","items":15,"total":77400,"status":"Cancelled","date":"2026-08-21","region":"Europe","contact":"buying@alpinecomponents.example"},
+  {"id":"ORD-10361","customer":"Sakura Merchants","items":21,"total":89450,"status":"Shipped","date":"2026-08-21","region":"APAC","contact":"logistics@sakura.example"},
+  {"id":"ORD-10352","customer":"Gulf Commerce LLC","items":11,"total":47600,"status":"Delivered","date":"2026-08-20","region":"Middle East","contact":"orders@gulfcommerce.example"}
+]

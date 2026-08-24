@@ -1,0 +1,8 @@
+[
+  {"id":"SUP-102","name":"Shenzhen Nova Electronics","country":"China","region":"APAC","category":"Electronics","rating":4.9,"activeOrders":12,"email":"supply@nova-electronics.example","phone":"+86 755 5550 1148","onTimeRate":96},
+  {"id":"SUP-087","name":"Rheinland Industrial GmbH","country":"Germany","region":"Europe","category":"Machinery","rating":4.8,"activeOrders":8,"email":"export@rheinland-industrial.example","phone":"+49 40 555 0192","onTimeRate":94},
+  {"id":"SUP-076","name":"Lanka Technical Textiles","country":"Sri Lanka","region":"South Asia","category":"Textiles","rating":4.7,"activeOrders":6,"email":"trade@lankatextiles.example","phone":"+94 11 555 2608","onTimeRate":92},
+  {"id":"SUP-064","name":"Aichi Mobility Systems","country":"Japan","region":"APAC","category":"Automotive","rating":4.9,"activeOrders":10,"email":"global@aichi-mobility.example","phone":"+81 52 555 8311","onTimeRate":98},
+  {"id":"SUP-051","name":"Emirates Packaging Solutions","country":"UAE","region":"Middle East","category":"Packaging","rating":4.6,"activeOrders":4,"email":"sales@eps-gulf.example","phone":"+971 4 555 6710","onTimeRate":91},
+  {"id":"SUP-043","name":"Maple Circuit Technologies","country":"Canada","region":"North America","category":"Electronics","rating":4.5,"activeOrders":5,"email":"orders@maplecircuit.example","phone":"+1 604 555 1830","onTimeRate":89}
+]

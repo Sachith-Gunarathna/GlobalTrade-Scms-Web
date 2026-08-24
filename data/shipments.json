@@ -1,0 +1,10 @@
+[
+  {"id":"SHP-78421","origin":"Shanghai, CN","destination":"Rotterdam, NL","status":"In Transit","eta":"2026-08-29","carrier":"Maersk","vessel":"Maersk Elba","progress":68,"value":248000,"weight":"18.4 t","updated":"12 min ago"},
+  {"id":"SHP-78418","origin":"Singapore, SG","destination":"Los Angeles, US","status":"Delayed","eta":"2026-08-28","carrier":"CMA CGM","vessel":"CMA CGM Marco Polo","progress":54,"value":176500,"weight":"12.7 t","updated":"31 min ago"},
+  {"id":"SHP-78412","origin":"Hamburg, DE","destination":"Dubai, AE","status":"Delivered","eta":"2026-08-23","carrier":"Hapag-Lloyd","vessel":"Berlin Express","progress":100,"value":312400,"weight":"21.1 t","updated":"1 hr ago"},
+  {"id":"SHP-78405","origin":"Colombo, LK","destination":"Melbourne, AU","status":"Pending","eta":"2026-09-03","carrier":"MSC","vessel":"MSC Isabella","progress":12,"value":93800,"weight":"8.9 t","updated":"2 hrs ago"},
+  {"id":"SHP-78397","origin":"Busan, KR","destination":"Vancouver, CA","status":"In Transit","eta":"2026-08-31","carrier":"ONE","vessel":"ONE Innovation","progress":47,"value":205900,"weight":"15.6 t","updated":"3 hrs ago"},
+  {"id":"SHP-78388","origin":"Tokyo, JP","destination":"Long Beach, US","status":"Delivered","eta":"2026-08-22","carrier":"Evergreen","vessel":"Ever Ace","progress":100,"value":144300,"weight":"10.3 t","updated":"5 hrs ago"},
+  {"id":"SHP-78379","origin":"Jebel Ali, AE","destination":"Antwerp, BE","status":"In Transit","eta":"2026-09-01","carrier":"COSCO","vessel":"Cosco Shipping Universe","progress":39,"value":286750,"weight":"19.8 t","updated":"6 hrs ago"},
+  {"id":"SHP-78364","origin":"Chennai, IN","destination":"Felixstowe, UK","status":"Delayed","eta":"2026-09-02","carrier":"MSC","vessel":"MSC Gülsün","progress":43,"value":121600,"weight":"9.4 t","updated":"8 hrs ago"}
+]

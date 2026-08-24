@@ -1,0 +1,10 @@
+[
+  {"sku":"ELX-4420","name":"Industrial IoT Gateway","category":"Electronics","stock":328,"threshold":120,"warehouse":"Singapore Hub","value":196800,"capacity":500},
+  {"sku":"MCH-1108","name":"Precision Valve Assembly","category":"Machinery","stock":74,"threshold":90,"warehouse":"Rotterdam DC","value":88800,"capacity":260},
+  {"sku":"TXT-2091","name":"Technical Fabric Roll","category":"Textiles","stock":612,"threshold":180,"warehouse":"Colombo Hub","value":73440,"capacity":800},
+  {"sku":"ELX-3914","name":"Smart Power Controller","category":"Electronics","stock":41,"threshold":80,"warehouse":"Los Angeles DC","value":49200,"capacity":320},
+  {"sku":"AUT-7712","name":"EV Charging Connector","category":"Automotive","stock":215,"threshold":100,"warehouse":"Hamburg DC","value":129000,"capacity":420},
+  {"sku":"MCH-8827","name":"Hydraulic Pump Module","category":"Machinery","stock":137,"threshold":70,"warehouse":"Dubai Hub","value":164400,"capacity":280},
+  {"sku":"PKG-6173","name":"Reusable Cargo Crate","category":"Packaging","stock":38,"threshold":75,"warehouse":"Singapore Hub","value":11400,"capacity":350},
+  {"sku":"AUT-2284","name":"Thermal Management Unit","category":"Automotive","stock":183,"threshold":95,"warehouse":"Vancouver DC","value":201300,"capacity":300}
+]

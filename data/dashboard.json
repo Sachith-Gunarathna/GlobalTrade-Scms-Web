@@ -1,0 +1,17 @@
+{
+  "kpis": [
+    {"label":"Total Shipments","value":"1,284","delta":"+12.4%","trend":"up","spark":[44,52,49,61,67,70,82]},
+    {"label":"Active Orders","value":"342","delta":"+8.1%","trend":"up","spark":[28,31,29,36,40,39,46]},
+    {"label":"Inventory Value","value":"$4.82M","delta":"+5.6%","trend":"up","spark":[54,58,63,61,69,73,76]},
+    {"label":"Active Suppliers","value":"96","delta":"-1.2%","trend":"down","spark":[72,70,71,69,68,67,66]}
+  ],
+  "shipmentTrend": [
+    {"day":"Aug 01","delivered":32,"inTransit":41},{"day":"Aug 05","delivered":38,"inTransit":46},{"day":"Aug 09","delivered":35,"inTransit":53},{"day":"Aug 13","delivered":46,"inTransit":49},{"day":"Aug 17","delivered":52,"inTransit":57},{"day":"Aug 21","delivered":49,"inTransit":64},{"day":"Aug 24","delivered":58,"inTransit":69}
+  ],
+  "alerts": [
+    {"type":"danger","title":"Shipment SHP-78418 delayed","message":"Port congestion added ~18 hours to ETA.","time":"18 min"},
+    {"type":"warning","title":"Low stock: ELX-3914","message":"41 units remaining at Los Angeles DC.","time":"42 min"},
+    {"type":"warning","title":"Low stock: PKG-6173","message":"38 reusable cargo crates remaining.","time":"1 hr"},
+    {"type":"info","title":"Customs documents verified","message":"SHP-78379 cleared pre-arrival review.","time":"2 hrs"}
+  ]
+}

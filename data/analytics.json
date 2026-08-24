@@ -1,0 +1,14 @@
+{
+  "revenue": [
+    {"month":"Mar","revenue":840000,"target":780000},{"month":"Apr","revenue":910000,"target":830000},{"month":"May","revenue":875000,"target":860000},{"month":"Jun","revenue":1040000,"target":920000},{"month":"Jul","revenue":1180000,"target":1010000},{"month":"Aug","revenue":1265000,"target":1090000}
+  ],
+  "regions": [
+    {"region":"APAC","shipments":184},{"region":"Europe","shipments":142},{"region":"N. America","shipments":128},{"region":"Middle East","shipments":94},{"region":"Oceania","shipments":56}
+  ],
+  "fulfillment": [
+    {"name":"On time","value":86},{"name":"Late","value":9},{"name":"Open","value":5}
+  ],
+  "topSuppliers": [
+    {"name":"Shenzhen Nova Electronics","volume":248},{"name":"Aichi Mobility Systems","volume":221},{"name":"Rheinland Industrial GmbH","volume":198},{"name":"Lanka Technical Textiles","volume":176},{"name":"Emirates Packaging Solutions","volume":143}
+  ]
+}
