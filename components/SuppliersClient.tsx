@@ -158,18 +158,24 @@ export function SuppliersClient({
               <span className="section-label">{s.category}</span>
               <h2>{s.name}</h2>
               <div className="rating">
-                <Star size={15} fill="currentColor"/>
+                <Star size={14} fill="currentColor"/>
                 <strong>{s.rating.toFixed(1)}</strong>
                 <span>Rating</span>
               </div>
             </div>
             <div className="supplier-stats">
-              <div><span>Active orders</span><strong>{s.activeOrders}</strong></div>
-              <div><span>On-time</span><strong>{s.onTimeRate}%</strong></div>
+              <div>
+                <span>Active orders</span>
+                <strong>{s.activeOrders}</strong>
+              </div>
+              <div>
+                <span>On-time rate</span>
+                <strong>{s.onTimeRate}%</strong>
+              </div>
             </div>
             <div className="supplier-footer">
-              <a href={`mailto:${s.email}`} className="icon-link"><Mail size={13}/>{s.email}</a>
-              <a href={`tel:${s.phone}`} className="icon-link"><Phone size={13}/>{s.phone}</a>
+              <a href={`mailto:${s.email}`} className="icon-link"><Mail size={12}/>{s.email}</a>
+              <a href={`tel:${s.phone}`} className="icon-link"><Phone size={12}/>{s.phone}</a>
             </div>
           </article>
         ))}
