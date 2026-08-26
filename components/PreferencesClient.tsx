@@ -20,6 +20,7 @@ import {
   Volume2
 } from 'lucide-react';
 import { PageHeader } from './PageHeader';
+import { CustomSelect } from './CustomSelect';
 
 export function PreferencesClient() {
   const [activeTab, setActiveTab] = useState<'theme' | 'localization' | 'notifications' | 'dashboard'>('theme');
@@ -227,51 +228,71 @@ export function PreferencesClient() {
           <div className="form-grid-2">
             <div className="form-group">
               <label><DollarSign size={14} /> Primary Valuation Currency</label>
-              <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                <option value="LKR">Sri Lankan Rupee (LKR - Rs.)</option>
-                <option value="USD">US Dollar (USD - $)</option>
-                <option value="EUR">Euro (EUR - €)</option>
-                <option value="GBP">British Pound (GBP - £)</option>
-                <option value="SGD">Singapore Dollar (SGD - S$)</option>
-              </select>
+              <CustomSelect
+                options={[
+                  { value: 'LKR', label: 'Sri Lankan Rupee (LKR - Rs.)', badge: 'Primary' },
+                  { value: 'USD', label: 'US Dollar (USD - $)' },
+                  { value: 'EUR', label: 'Euro (EUR - €)' },
+                  { value: 'GBP', label: 'British Pound (GBP - £)' },
+                  { value: 'SGD', label: 'Singapore Dollar (SGD - S$)' }
+                ]}
+                value={currency}
+                onChange={(val) => setCurrency(val)}
+              />
             </div>
 
             <div className="form-group">
               <label><Languages size={14} /> System Interface Language</label>
-              <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                <option value="en">English (International Logistics)</option>
-                <option value="si">සිංහල (Sinhala - Sri Lanka)</option>
-                <option value="ta">தமிழ் (Tamil - Sri Lanka)</option>
-              </select>
+              <CustomSelect
+                options={[
+                  { value: 'en', label: 'English (International Logistics)', badge: 'Default' },
+                  { value: 'si', label: 'සිංහල (Sinhala - Sri Lanka)' },
+                  { value: 'ta', label: 'தமிழ் (Tamil - Sri Lanka)' }
+                ]}
+                value={language}
+                onChange={(val) => setLanguage(val)}
+              />
             </div>
           </div>
 
           <div className="form-grid-3">
             <div className="form-group">
               <label><Clock size={14} /> Timezone Offset</label>
-              <select value={timezone} onChange={(e) => setTimezone(e.target.value)}>
-                <option value="Asia/Colombo">Asia/Colombo (Sri Lanka Standard Time - GMT+5:30)</option>
-                <option value="Asia/Singapore">Asia/Singapore (SGT - GMT+8:00)</option>
-                <option value="Asia/Dubai">Asia/Dubai (GST - GMT+4:00)</option>
-                <option value="UTC">Coordinated Universal Time (UTC)</option>
-              </select>
+              <CustomSelect
+                options={[
+                  { value: 'Asia/Colombo', label: 'Asia/Colombo (Sri Lanka Standard Time - GMT+5:30)', badge: 'SLST' },
+                  { value: 'Asia/Singapore', label: 'Asia/Singapore (SGT - GMT+8:00)' },
+                  { value: 'Asia/Dubai', label: 'Asia/Dubai (GST - GMT+4:00)' },
+                  { value: 'UTC', label: 'Coordinated Universal Time (UTC)' }
+                ]}
+                value={timezone}
+                onChange={(val) => setTimezone(val)}
+              />
             </div>
 
             <div className="form-group">
               <label>Calendar Date Format</label>
-              <select value={dateFormat} onChange={(e) => setDateFormat(e.target.value)}>
-                <option value="DD/MM/YYYY">DD/MM/YYYY (Sri Lanka Standard - e.g. 24/08/2026)</option>
-                <option value="YYYY-MM-DD">YYYY-MM-DD (ISO 8601 - e.g. 2026-08-24)</option>
-                <option value="MM/DD/YYYY">MM/DD/YYYY (US Format - e.g. 08/24/2026)</option>
-              </select>
+              <CustomSelect
+                options={[
+                  { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY (Sri Lanka Standard - 24/08/2026)' },
+                  { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD (ISO 8601 - 2026-08-24)' },
+                  { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY (US Format - 08/24/2026)' }
+                ]}
+                value={dateFormat}
+                onChange={(val) => setDateFormat(val)}
+              />
             </div>
 
             <div className="form-group">
               <label>Cargo Weight & Volume Unit</label>
-              <select value={weightUnit} onChange={(e) => setWeightUnit(e.target.value)}>
-                <option value="kg">Metric (Kilograms / Metric Tonnes / TEU)</option>
-                <option value="lbs">Imperial (Pounds / Short Tons)</option>
-              </select>
+              <CustomSelect
+                options={[
+                  { value: 'kg', label: 'Metric (Kilograms / Metric Tonnes / TEU)' },
+                  { value: 'lbs', label: 'Imperial (Pounds / Short Tons)' }
+                ]}
+                value={weightUnit}
+                onChange={(val) => setWeightUnit(val)}
+              />
             </div>
           </div>
         </div>
@@ -283,20 +304,20 @@ export function PreferencesClient() {
           <div className="settings-section-head">
             <div>
               <h3>Supply Chain Event Notifications</h3>
-              <p>Select which operational exceptions trigger email, SMS, and desktop alerts.</p>
+              <p>Configure automated email triggers, SMS dispatch alerts, and audio telemetry chimes.</p>
             </div>
             <button type="button" className="primary-btn" onClick={handleSave}>
-              <Save size={14} /> Update Subscriptions
+              <Save size={14} /> Save Subscriptions
             </button>
           </div>
 
           <div className="preference-toggle-list">
             <div className="security-toggle-row">
               <div className="toggle-info">
-                <div className="toggle-icon red"><Truck size={18} /></div>
+                <div className="toggle-icon blue"><Truck size={18} /></div>
                 <div>
-                  <strong>Expressway / Port Transit Delay Warnings</strong>
-                  <p>Instant alert when a container truck is delayed by over 60 minutes due to weather or port congestion.</p>
+                  <strong>Critical Shipment Delays & Port Congestion</strong>
+                  <p>Receive real-time push alerts when transit vessels or expressways exceed buffer times.</p>
                 </div>
               </div>
               <button
@@ -312,8 +333,8 @@ export function PreferencesClient() {
               <div className="toggle-info">
                 <div className="toggle-icon amber"><Package size={18} /></div>
                 <div>
-                  <strong>Low Warehouse Stock Threshold Triggers</strong>
-                  <p>Notify when any SKU at Colombo, Kandy, or Hambantota distribution centers falls below 15% safety stock.</p>
+                  <strong>Low Stock Inventory Alerts</strong>
+                  <p>Trigger automated procurement notices when SKU stock drops below safety reorder threshold.</p>
                 </div>
               </div>
               <button
@@ -329,14 +350,14 @@ export function PreferencesClient() {
               <div className="toggle-info">
                 <div className="toggle-icon green"><FileText size={18} /></div>
                 <div>
-                  <strong>Sri Lanka Customs ASYCUDA Clearance Notices</strong>
-                  <p>Send an update when incoming maritime shipments receive pre-arrival green light status.</p>
+                  <strong>Weekly Performance Intelligence Digest</strong>
+                  <p>Receive aggregated executive metrics and SLA delivery scorecards every Monday morning.</p>
                 </div>
               </div>
               <button
                 type="button"
-                className={`toggle-switch ${notifCustomsCleared ? 'active' : ''}`}
-                onClick={() => setNotifCustomsCleared(!notifCustomsCleared)}
+                className={`toggle-switch ${notifWeeklyDigest ? 'active' : ''}`}
+                onClick={() => setNotifWeeklyDigest(!notifWeeklyDigest)}
               >
                 <span />
               </button>
@@ -344,10 +365,10 @@ export function PreferencesClient() {
 
             <div className="security-toggle-row">
               <div className="toggle-info">
-                <div className="toggle-icon blue"><Volume2 size={18} /></div>
+                <div className="toggle-icon red"><Volume2 size={18} /></div>
                 <div>
-                  <strong>Audible Alert Chimes</strong>
-                  <p>Play subtle chime on critical operational exceptions.</p>
+                  <strong>Audio Chimes & Terminal Telemetry Sounds</strong>
+                  <p>Play subtle audio cues when priority dispatch orders are fulfilled or received.</p>
                 </div>
               </div>
               <button
@@ -362,13 +383,13 @@ export function PreferencesClient() {
         </div>
       )}
 
-      {/* Tab 4: Dashboard Layout */}
+      {/* Tab 4: Dashboard & Telemetry */}
       {activeTab === 'dashboard' && (
         <div className="settings-panel glass-panel">
           <div className="settings-section-head">
             <div>
-              <h3>Dashboard & Real-Time Telemetry</h3>
-              <p>Configure live data polling intervals and primary landing widgets.</p>
+              <h3>Dashboard Flow & Telemetry</h3>
+              <p>Configure automated data polling frequency, chart rendering styles, and default entry view.</p>
             </div>
             <button type="button" className="primary-btn" onClick={handleSave}>
               <Save size={14} /> Save Configuration
@@ -378,23 +399,31 @@ export function PreferencesClient() {
           <div className="form-grid-2">
             <div className="form-group">
               <label>Live Polling Frequency</label>
-              <select value={autoRefreshRate} onChange={(e) => setAutoRefreshRate(e.target.value)}>
-                <option value="15s">Every 15 seconds (High Frequency / Port Dispatch)</option>
-                <option value="30s">Every 30 seconds (Recommended)</option>
-                <option value="1m">Every 1 minute</option>
-                <option value="5m">Every 5 minutes</option>
-                <option value="manual">Manual Refresh Only</option>
-              </select>
+              <CustomSelect
+                options={[
+                  { value: '15s', label: 'Every 15 seconds (High Frequency / Port Dispatch)' },
+                  { value: '30s', label: 'Every 30 seconds (Recommended)', badge: 'Optimal' },
+                  { value: '1m', label: 'Every 1 minute' },
+                  { value: '5m', label: 'Every 5 minutes' },
+                  { value: 'manual', label: 'Manual Refresh Only' }
+                ]}
+                value={autoRefreshRate}
+                onChange={(val) => setAutoRefreshRate(val)}
+              />
             </div>
 
             <div className="form-group">
               <label>Default Launch Workspace</label>
-              <select value={defaultView} onChange={(e) => setDefaultView(e.target.value)}>
-                <option value="overview">Executive Command Overview (Dashboard)</option>
-                <option value="shipments">Live Shipment Dispatch Table</option>
-                <option value="orders">Fulfillment & Orders Flow</option>
-                <option value="inventory">Warehouse Inventory Matrix</option>
-              </select>
+              <CustomSelect
+                options={[
+                  { value: 'overview', label: 'Executive Command Overview (Dashboard)' },
+                  { value: 'shipments', label: 'Live Shipment Dispatch Table' },
+                  { value: 'orders', label: 'Fulfillment & Orders Flow' },
+                  { value: 'inventory', label: 'Warehouse Inventory Matrix' }
+                ]}
+                value={defaultView}
+                onChange={(val) => setDefaultView(val)}
+              />
             </div>
           </div>
         </div>

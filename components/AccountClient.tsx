@@ -23,23 +23,40 @@ import {
   Check
 } from 'lucide-react';
 import { PageHeader } from './PageHeader';
+import { useAuth } from '@/context/AuthContext';
 
 export function AccountClient() {
+  const { user, updateUserProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'permissions' | 'sessions'>('profile');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Form State
+  // Form State initialized from active user
   const [formData, setFormData] = useState({
-    firstName: 'Alex',
-    lastName: 'Grant',
-    title: 'Operations Director & SCMS Lead',
-    email: 'alex.grant@globaltrade.lk',
-    secondaryEmail: 'a.grant.ops@trade-net.com',
-    phone: '+94 77 182 9400',
-    location: 'Port of Colombo Hub, Sri Lanka',
-    department: 'Global Supply Chain & Logistics',
+    firstName: user?.firstName || 'Alex',
+    lastName: user?.lastName || 'Grant',
+    title: user?.title || 'Operations Director & SCMS Lead',
+    email: user?.email || 'alex.grant@globaltrade.lk',
+    secondaryEmail: 'ops.desk@globaltrade.lk',
+    phone: user?.phone || '+94 77 182 9400',
+    location: user?.hub || 'Port of Colombo Hub, Sri Lanka',
+    department: user?.department || 'Global Supply Chain & Logistics',
     bio: 'Lead supply chain director overseeing island-wide distribution, port transshipment, and domestic expressway freight corridors.',
   });
+
+  React.useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        title: user.title,
+        email: user.email,
+        phone: user.phone || prev.phone,
+        location: user.hub || prev.location,
+        department: user.department || prev.department
+      }));
+    }
+  }, [user]);
 
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
   const [biometricEnabled, setBiometricEnabled] = useState(true);
@@ -51,8 +68,19 @@ export function AccountClient() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    updateUserProfile({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      name: `${formData.firstName} ${formData.lastName}`.trim(),
+      email: formData.email,
+      title: formData.title,
+      phone: formData.phone,
+      department: formData.department,
+      hub: formData.location
+    });
     showToast('Account details updated successfully!');
   };
+
 
   return (
     <div className="account-container">
@@ -65,7 +93,7 @@ export function AccountClient() {
       {/* Profile Hero Header */}
       <section className="account-hero glass-panel">
         <div className="account-avatar-wrap">
-          <div className="account-avatar">AG</div>
+          <div className="account-avatar">{user?.avatar || `${formData.firstName[0] || 'U'}${formData.lastName[0] || 'G'}`}</div>
           <button className="avatar-edit-btn" title="Change profile picture" type="button">
             <Camera size={14} />
           </button>
@@ -73,14 +101,14 @@ export function AccountClient() {
         <div className="account-hero-info">
           <div className="hero-name-row">
             <h2>{formData.firstName} {formData.lastName}</h2>
-            <span className="role-chip lead">Operations Director</span>
+            <span className="role-chip lead">{user?.role || 'Operations Director'}</span>
             <span className="status-chip active"><i /> Active</span>
           </div>
           <p className="hero-subtitle">{formData.title} • {formData.department}</p>
           <div className="hero-meta-items">
             <span><Mail size={13} /> {formData.email}</span>
             <span><Phone size={13} /> {formData.phone}</span>
-            <span><MapPin size={13} /> Colombo Hub, LK</span>
+            <span><MapPin size={13} /> {formData.location}</span>
             <span><Clock size={13} /> Asia/Colombo (GMT+5:30)</span>
           </div>
         </div>

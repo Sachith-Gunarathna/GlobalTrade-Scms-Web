@@ -20,6 +20,7 @@ import { PageHeader } from './PageHeader';
 import { StatusBadge } from './StatusBadge';
 import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
+import { CustomSelect } from './CustomSelect';
 import type { Order, OrderStatus } from '@/types';
 
 const statuses = ['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
@@ -210,16 +211,17 @@ export function OrdersClient({
             </div>
             <div className="form-group">
               <label>Fulfillment Status</label>
-              <select
+              <CustomSelect
+                options={[
+                  { value: 'Processing', label: 'Processing' },
+                  { value: 'Pending', label: 'Pending Intake' },
+                  { value: 'Shipped', label: 'Shipped' },
+                  { value: 'Delivered', label: 'Delivered' },
+                  { value: 'Cancelled', label: 'Cancelled' }
+                ]}
                 value={newOrder.status}
-                onChange={(e) => setNewOrder({ ...newOrder, status: e.target.value as OrderStatus })}
-              >
-                <option value="Processing">Processing</option>
-                <option value="Pending">Pending Intake</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Delivered">Delivered</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
+                onChange={(val) => setNewOrder({ ...newOrder, status: val as OrderStatus })}
+              />
             </div>
           </div>
 
@@ -249,20 +251,21 @@ export function OrdersClient({
           <div className="form-grid-3">
             <div className="form-group">
               <label><MapPin size={13} /> Destination Region</label>
-              <select
+              <CustomSelect
+                options={[
+                  'Western Province (Colombo)',
+                  'Central Province (Kandy)',
+                  'Southern Province (Galle / Hambantota)',
+                  'North Central (Anuradhapura)',
+                  'Northern Province (Jaffna)',
+                  'Eastern Province (Trincomalee)',
+                  'North Western (Kurunegala)',
+                  'Uva Province (Badulla)',
+                  'Sabaragamuwa (Ratnapura)'
+                ]}
                 value={newOrder.region}
-                onChange={(e) => setNewOrder({ ...newOrder, region: e.target.value })}
-              >
-                <option value="Western Province">Western Province (Colombo)</option>
-                <option value="Central Province">Central Province (Kandy)</option>
-                <option value="Southern Province">Southern Province (Galle / H'tota)</option>
-                <option value="North Central">North Central (Anuradhapura)</option>
-                <option value="Northern Province">Northern Province (Jaffna)</option>
-                <option value="Eastern Province">Eastern Province (Trincomalee)</option>
-                <option value="North Western">North Western (Kurunegala)</option>
-                <option value="Uva Province">Uva Province (Badulla)</option>
-                <option value="Sabaragamuwa">Sabaragamuwa (Ratnapura)</option>
-              </select>
+                onChange={(val) => setNewOrder({ ...newOrder, region: val })}
+              />
             </div>
 
             <div className="form-group">

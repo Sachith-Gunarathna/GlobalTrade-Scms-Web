@@ -19,6 +19,7 @@ import {
 import { PageHeader } from './PageHeader';
 import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
+import { CustomSelect } from './CustomSelect';
 import type { Supplier } from '@/types';
 
 const flags: Record<string, string> = {
@@ -132,12 +133,13 @@ export function SuppliersClient({
         <Search size={16}/>
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search suppliers..."/>
       </div>
-      <div className="select-wrap">
-        <MapPinned size={15}/>
-        <select value={region} onChange={(e) => setRegion(e.target.value)}>
-          {regions.map((r) => <option key={r}>{r}</option>)}
-        </select>
-      </div>
+      <CustomSelect
+        options={regions}
+        value={region}
+        onChange={(val) => setRegion(val)}
+        icon={<MapPinned size={14} />}
+        ariaLabel="Filter by region"
+      />
     </section>
 
     {filtered.length ? (
@@ -158,45 +160,27 @@ export function SuppliersClient({
               <div className="rating">
                 <Star size={15} fill="currentColor"/>
                 <strong>{s.rating.toFixed(1)}</strong>
-                <span>verified partner</span>
+                <span>Rating</span>
               </div>
             </div>
-            <div className="supplier-metrics">
-              <div>
-                <span>Active orders</span>
-                <strong>{s.activeOrders}</strong>
-              </div>
-              <div>
-                <span>On-time rate</span>
-                <strong>{s.onTimeRate}%</strong>
-              </div>
-              <div>
-                <span>Region</span>
-                <strong>{s.region}</strong>
-              </div>
+            <div className="supplier-stats">
+              <div><span>Active orders</span><strong>{s.activeOrders}</strong></div>
+              <div><span>On-time</span><strong>{s.onTimeRate}%</strong></div>
             </div>
-            <div className="performance-bar">
-              <span><i style={{ width: `${s.onTimeRate}%` }}/></span>
-              <small><TrendingUp size={13}/> Delivery reliability</small>
-            </div>
-            <div className="supplier-contact">
-              <a href={`mailto:${s.email}`}><Mail size={14}/>{s.email}</a>
-              <a href={`tel:${s.phone}`}><Phone size={14}/>{s.phone}</a>
+            <div className="supplier-footer">
+              <a href={`mailto:${s.email}`} className="icon-link"><Mail size={13}/>{s.email}</a>
+              <a href={`tel:${s.phone}`} className="icon-link"><Phone size={13}/>{s.phone}</a>
             </div>
           </article>
         ))}
       </section>
-    ) : (
-      <div className="panel glass-panel">
-        <EmptyState title="No suppliers found"/>
-      </div>
-    )}
+    ) : <EmptyState title="No suppliers match filter"/>}
 
-    {/* Add Supplier Modal Form */}
+    {/* Create Supplier Modal */}
     {isAddOpen && (
       <Modal
-        title="Onboard New Supplier Partner"
-        subtitle="Register vendor profile, country of origin, procurement category, and contact information"
+        title="Add New Vendor / Supplier"
+        subtitle="Register a verified logistics vendor, raw material producer, or global distributor"
         onClose={() => setIsAddOpen(false)}
       >
         <form onSubmit={handleAddSupplier} className="modal-form-wrap">
@@ -213,27 +197,38 @@ export function SuppliersClient({
             </div>
             <div className="form-group">
               <label><Tag size={13} /> Sourcing Category</label>
-              <select
+              <CustomSelect
+                options={[
+                  'Industrial Manufacturing',
+                  'Raw Materials',
+                  'Electronics & Sensors',
+                  'Packaging & Logistics',
+                  'Agricultural Products',
+                  'Textiles & Fabrics'
+                ]}
                 value={newSupplier.category}
-                onChange={(e) => setNewSupplier({ ...newSupplier, category: e.target.value })}
-              >
-                <option value="Industrial Manufacturing">Industrial Manufacturing</option>
-                <option value="Raw Materials">Raw Materials & Minerals</option>
-                <option value="Electronics & Sensors">Electronics & Microchips</option>
-                <option value="Packaging & Logistics">Packaging & Logistics Crate</option>
-                <option value="Agricultural Products">Agricultural & Agro-Goods</option>
-                <option value="Textiles & Fabrics">Textiles & Garment Sourcing</option>
-              </select>
+                onChange={(val) => setNewSupplier({ ...newSupplier, category: val })}
+              />
             </div>
           </div>
 
           <div className="form-grid-2">
             <div className="form-group">
               <label><Globe2 size={13} /> Country of Origin</label>
-              <select
+              <CustomSelect
+                options={[
+                  { value: 'Sri Lanka', label: '🇱🇰 Sri Lanka (Domestic Sourcing)' },
+                  { value: 'China', label: '🇨🇳 China' },
+                  { value: 'Germany', label: '🇩🇪 Germany' },
+                  { value: 'Japan', label: '🇯🇵 Japan' },
+                  { value: 'India', label: '🇮🇳 India' },
+                  { value: 'Singapore', label: '🇸🇬 Singapore' },
+                  { value: 'UAE', label: '🇦🇪 UAE' },
+                  { value: 'UK', label: '🇬🇧 United Kingdom' },
+                  { value: 'Canada', label: '🇨🇦 Canada' }
+                ]}
                 value={newSupplier.country}
-                onChange={(e) => {
-                  const c = e.target.value;
+                onChange={(c) => {
                   const reg =
                     c === 'Sri Lanka' || c === 'India'
                       ? 'South Asia'
@@ -246,17 +241,7 @@ export function SuppliersClient({
                       : 'North America';
                   setNewSupplier({ ...newSupplier, country: c, region: reg });
                 }}
-              >
-                <option value="Sri Lanka">🇱🇰 Sri Lanka (Domestic Sourcing)</option>
-                <option value="China">🇨🇳 China</option>
-                <option value="Germany">🇩🇪 Germany</option>
-                <option value="Japan">🇯🇵 Japan</option>
-                <option value="India">🇮🇳 India</option>
-                <option value="Singapore">🇸🇬 Singapore</option>
-                <option value="UAE">🇦🇪 UAE</option>
-                <option value="UK">🇬🇧 United Kingdom</option>
-                <option value="Canada">🇨🇦 Canada</option>
-              </select>
+              />
             </div>
 
             <div className="form-group">

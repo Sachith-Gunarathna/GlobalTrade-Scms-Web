@@ -22,6 +22,7 @@ import { PageHeader } from './PageHeader';
 import { StatusBadge } from './StatusBadge';
 import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
+import { CustomSelect } from './CustomSelect';
 import type { Shipment, ShipmentStatus } from '@/types';
 
 const statuses = ['All', 'In Transit', 'Delayed', 'Delivered', 'Pending'];
@@ -132,9 +133,27 @@ export function ShipmentsClient({
       <div className="table-toolbar">
         <div className="toolbar-search"><Search size={16}/><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search ID, route or carrier..." /></div>
         <div className="toolbar-group">
-          <div className="select-wrap"><Filter size={15}/><select aria-label="Filter by status" value={status} onChange={(e) => setStatus(e.target.value)}>{statuses.map((s) => <option key={s}>{s}</option>)}</select></div>
-          <div className="select-wrap"><MapPin size={15}/><select aria-label="Filter by origin" value={origin} onChange={(e) => setOrigin(e.target.value)}>{origins.map((x) => <option key={x}>{x}</option>)}</select></div>
-          <div className="select-wrap"><MapPin size={15}/><select aria-label="Filter by destination" value={destination} onChange={(e) => setDestination(e.target.value)}>{destinations.map((x) => <option key={x}>{x}</option>)}</select></div>
+          <CustomSelect
+            options={statuses.map((s) => ({ value: s, label: s === 'All' ? 'All Statuses' : s }))}
+            value={status}
+            onChange={(val) => setStatus(val)}
+            icon={<Filter size={14} />}
+            ariaLabel="Filter by status"
+          />
+          <CustomSelect
+            options={origins}
+            value={origin}
+            onChange={(val) => setOrigin(val)}
+            icon={<MapPin size={14} />}
+            ariaLabel="Filter by origin"
+          />
+          <CustomSelect
+            options={destinations}
+            value={destination}
+            onChange={(val) => setDestination(val)}
+            icon={<MapPin size={14} />}
+            ariaLabel="Filter by destination"
+          />
           <div className="date-filter"><CalendarDays size={15}/><input aria-label="ETA from date" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} /><span className="date-sep">→</span><input aria-label="ETA to date" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} /></div>
           {(query || status !== 'All' || origin !== 'All origins' || destination !== 'All destinations' || fromDate || toDate) && <button className="ghost-btn" onClick={() => { setQuery(''); setStatus('All'); setOrigin('All origins'); setDestination('All destinations'); setFromDate(''); setToDate(''); }}>Clear</button>}
         </div>
@@ -149,9 +168,15 @@ export function ShipmentsClient({
           <td><StatusBadge status={s.status}/></td>
           <td>{new Date(s.eta).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
           <td>{s.carrier}</td>
-          <td><div className="mini-progress"><span><i style={{width:`${s.progress}%`}}/></span><small>{s.progress}%</small></div></td>
-          <td><ChevronRight size={16} className="row-arrow"/></td>
-        </tr>)}</tbody></table>
+          <td>
+            <div className="progress-cell">
+              <span className="progress-bar"><i style={{ width: `${s.progress}%` }} /></span>
+              <span className="progress-text">{s.progress}%</span>
+            </div>
+          </td>
+          <td><ChevronRight size={15} className="row-chevron"/></td>
+        </tr>)}</tbody>
+        </table>
         {!filtered.length && <EmptyState title="No shipments found"/>}
       </div>
     </section>
@@ -196,15 +221,16 @@ export function ShipmentsClient({
             </div>
             <div className="form-group">
               <label>Initial Status</label>
-              <select
+              <CustomSelect
+                options={[
+                  { value: 'In Transit', label: 'In Transit (Active)' },
+                  { value: 'Pending', label: 'Pending Dispatch' },
+                  { value: 'Delayed', label: 'Delayed / Port Hold' },
+                  { value: 'Delivered', label: 'Delivered' }
+                ]}
                 value={newShipment.status}
-                onChange={(e) => setNewShipment({ ...newShipment, status: e.target.value as ShipmentStatus })}
-              >
-                <option value="In Transit">In Transit (Active)</option>
-                <option value="Pending">Pending Dispatch</option>
-                <option value="Delayed">Delayed / Port Hold</option>
-                <option value="Delivered">Delivered</option>
-              </select>
+                onChange={(val) => setNewShipment({ ...newShipment, status: val as ShipmentStatus })}
+              />
             </div>
           </div>
 

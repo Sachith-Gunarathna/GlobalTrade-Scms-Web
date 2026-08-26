@@ -21,6 +21,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { PageHeader } from './PageHeader';
+import { CustomSelect } from './CustomSelect';
 
 const TEAM_MEMBERS = [
   { id: 1, name: 'Alex Grant', role: 'Operations Director & Admin', email: 'alex.grant@globaltrade.lk', hub: 'Colombo HQ', status: 'Active' },
@@ -226,20 +227,28 @@ export function SettingsClient() {
           <div className="form-grid-2" style={{ marginTop: '16px' }}>
             <div className="form-group">
               <label>Heavy Vehicle Highway Speed Limit Buffer</label>
-              <select value={speedThreshold} onChange={(e) => setSpeedThreshold(e.target.value)}>
-                <option value="60 km/h">60 km/h (Strict Safety Mode)</option>
-                <option value="75 km/h">75 km/h (Expressway Commercial Standard)</option>
-                <option value="85 km/h">85 km/h (Emergency Priority)</option>
-              </select>
+              <CustomSelect
+                options={[
+                  { value: '60 km/h', label: '60 km/h (Strict Safety Mode)' },
+                  { value: '75 km/h', label: '75 km/h (Expressway Commercial Standard)', badge: 'Standard' },
+                  { value: '85 km/h', label: '85 km/h (Emergency Priority)' }
+                ]}
+                value={speedThreshold}
+                onChange={(val) => setSpeedThreshold(val)}
+              />
             </div>
 
             <div className="form-group">
               <label>Customs Inspection SLA Lead Time (Hours)</label>
-              <select value={customsBufferHours} onChange={(e) => setCustomsBufferHours(e.target.value)}>
-                <option value="2">2 Hours (Fast Track Expedited)</option>
-                <option value="4">4 Hours (Standard Sri Lanka Customs)</option>
-                <option value="8">8 Hours (Special Examination)</option>
-              </select>
+              <CustomSelect
+                options={[
+                  { value: '2', label: '2 Hours (Fast Track Expedited)' },
+                  { value: '4', label: '4 Hours (Standard Sri Lanka Customs)', badge: 'Standard' },
+                  { value: '8', label: '8 Hours (Special Examination)' }
+                ]}
+                value={customsBufferHours}
+                onChange={(val) => setCustomsBufferHours(val)}
+              />
             </div>
           </div>
         </div>

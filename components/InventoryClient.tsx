@@ -17,6 +17,7 @@ import {
 import { PageHeader } from './PageHeader';
 import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
+import { CustomSelect } from './CustomSelect';
 import type { InventoryItem } from '@/types';
 
 export function InventoryClient({
@@ -207,17 +208,18 @@ export function InventoryClient({
             </div>
             <div className="form-group">
               <label><Tag size={13} /> Product Category</label>
-              <select
+              <CustomSelect
+                options={[
+                  { value: 'Electronics', label: 'Electronics & Telematics' },
+                  { value: 'Packaging', label: 'Industrial Packaging' },
+                  { value: 'Apparel & Textiles', label: 'Apparel & Garments' },
+                  { value: 'Automotive', label: 'Automotive & Spare Parts' },
+                  { value: 'Agricultural', label: 'Agricultural & Ceylon Tea' },
+                  { value: 'Raw Materials', label: 'Raw Materials & Minerals' }
+                ]}
                 value={newItem.category}
-                onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-              >
-                <option value="Electronics">Electronics & Telematics</option>
-                <option value="Packaging">Industrial Packaging</option>
-                <option value="Apparel & Textiles">Apparel & Garments</option>
-                <option value="Automotive">Automotive & Spare Parts</option>
-                <option value="Agricultural">Agricultural & Ceylon Tea</option>
-                <option value="Raw Materials">Raw Materials & Minerals</option>
-              </select>
+                onChange={(val) => setNewItem({ ...newItem, category: val })}
+              />
             </div>
           </div>
 
@@ -234,17 +236,18 @@ export function InventoryClient({
 
           <div className="form-group">
             <label><Warehouse size={13} /> Warehouse Location</label>
-            <select
+            <CustomSelect
+              options={[
+                'Colombo Central Distribution Center',
+                'Port of Colombo Transshipment Hub',
+                'Hambantota Port Free Zone DC',
+                'Kandy Regional Logistics Depot',
+                'Anuradhapura Logistics Warehouse',
+                'Trincomalee Harbor Depot'
+              ]}
               value={newItem.warehouse}
-              onChange={(e) => setNewItem({ ...newItem, warehouse: e.target.value })}
-            >
-              <option value="Colombo Central Distribution Center">Colombo Central Distribution Center</option>
-              <option value="Port of Colombo Transshipment Hub">Port of Colombo Transshipment Hub</option>
-              <option value="Hambantota Port Free Zone DC">Hambantota Port Free Zone DC</option>
-              <option value="Kandy Regional Logistics Depot">Kandy Regional Logistics Depot</option>
-              <option value="Anuradhapura Logistics Warehouse">Anuradhapura Logistics Warehouse</option>
-              <option value="Trincomalee Harbor Depot">Trincomalee Harbor Depot</option>
-            </select>
+              onChange={(val) => setNewItem({ ...newItem, warehouse: val })}
+            />
           </div>
 
           <div className="form-grid-3">

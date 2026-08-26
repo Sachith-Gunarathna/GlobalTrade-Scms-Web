@@ -31,6 +31,7 @@ import {
   X
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import shipments from '@/data/shipments.json';
 import orders from '@/data/orders.json';
 import inventory from '@/data/inventory.json';
@@ -70,6 +71,14 @@ const allNav = [...nav, ...extraNav];
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, logout } = useAuth();
+
+  const isAuthRoute =
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/signin' ||
+    pathname === '/signup';
+
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -106,7 +115,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       .map((item) => ({ href: `/suppliers?q=${encodeURIComponent(item.name)}`, label: item.name, meta: `${item.country} · ${item.category}`, icon: UsersRound }));
 
     return [...moduleResults, ...shipmentResults, ...orderResults, ...inventoryResults, ...supplierResults].slice(0, 8);
-  }, [query, allNav]);
+  }, [query]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem('globaltrade-sidebar-collapsed');
@@ -145,6 +154,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const toggleNotification = (id: number) => {
     setReadNotifications((current) => current.includes(id) ? current.filter((n) => n !== id) : [...current, id]);
   };
+
+  if (isAuthRoute) {
+    return <>{children}</>;
+  }
+
 
   return (
     <div className={`app-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
@@ -263,12 +277,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             <div className="dropdown-wrap profile-wrap">
               <button className="profile-button" onClick={() => { setProfileOpen((v) => !v); setNotifOpen(false); }}>
-                <span className="avatar">AG</span>
-                <span className="profile-meta"><strong>Alex Grant</strong><small>Operations Director</small></span>
+                <span className="avatar">{user?.avatar || 'AG'}</span>
+                <span className="profile-meta"><strong>{user?.name || 'Alex Grant'}</strong><small>{user?.role?.split('&')[0] || user?.title || 'Operations Director'}</small></span>
                 <ChevronDown size={15} />
               </button>
               {profileOpen && (
                 <div className="dropdown-panel profile-panel glass">
+                  <div style={{ padding: '8px 12px 10px', borderBottom: '1px solid var(--line)', marginBottom: '6px' }}>
+                    <strong style={{ display: 'block', fontSize: '12px', color: '#f1f5f9' }}>{user?.name || 'Alex Grant'}</strong>
+                    <small style={{ display: 'block', fontSize: '10px', color: '#7b8fa7', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email || 'alex.grant@globaltrade.lk'}</small>
+                    <small style={{ display: 'block', fontSize: '9px', color: '#10b981', marginTop: '2px', fontWeight: 600 }}>{user?.hub || 'Colombo HQ'}</small>
+                  </div>
                   <Link href="/account" className="dropdown-nav-btn" onClick={() => setProfileOpen(false)}>
                     <CircleUserRound size={17} /> My account
                   </Link>
@@ -279,9 +298,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <Building2 size={17} /> System Settings
                   </Link>
                   <div className="dropdown-sep" />
-                  <Link href="/" className="dropdown-nav-btn danger-text" onClick={() => setProfileOpen(false)}>
+                  <button
+                    type="button"
+                    className="dropdown-nav-btn danger-text"
+                    onClick={() => {
+                      setProfileOpen(false);
+                      logout();
+                      router.push('/login');
+                    }}
+                    style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}
+                  >
                     <LogOut size={17} /> Sign out
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
