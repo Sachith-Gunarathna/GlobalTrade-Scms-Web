@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { AppShell } from '@/components/AppShell';
 import { AuthProvider } from '@/context/AuthContext';
+import { PreferencesProvider } from '@/context/PreferencesContext';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
@@ -42,10 +43,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className={inter.className}>
         <AuthProvider>
-          <AppShell>{children}</AppShell>
+          <PreferencesProvider>
+            <AppShell>{children}</AppShell>
+          </PreferencesProvider>
         </AuthProvider>
       </body>
     </html>
   );
 }
+
 

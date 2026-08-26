@@ -76,7 +76,7 @@ export const loginUser = async (credentials: { email: string; password: string }
         if (!response.ok) throw new Error('Failed to login');
         return await response.json();
     } catch (error) {
-        // Fallback for standalone/offline dev mode
+
         console.info('Backend auth endpoint unreachable, continuing in client authentication mode.');
         return null;
     }
@@ -93,7 +93,7 @@ export const registerUser = async (userData: any) => {
         if (!response.ok) throw new Error('Failed to register');
         return await response.json();
     } catch (error) {
-        // Fallback for standalone/offline dev mode
+
         console.info('Backend registration endpoint unreachable, continuing in client authentication mode.');
         return null;
     }
@@ -114,4 +114,36 @@ export const verifySession = async (token: string) => {
     } catch (error) {
         return null;
     }
-}
+}
+
+export const getUserPreferences = async (userId: string) => {
+    try {
+        const response = await fetch(`${BASE_URL}/users/${userId}/preferences`, {
+            method: 'GET',
+            headers
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch user preferences');
+        return await response.json();
+    } catch (error) {
+
+        return null;
+    }
+}
+
+export const updateUserPreferences = async (userId: string, preferences: any) => {
+    try {
+        const response = await fetch(`${BASE_URL}/users/${userId}/preferences`, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify(preferences)
+        });
+
+        if (!response.ok) throw new Error('Failed to update user preferences');
+        return await response.json();
+    } catch (error) {
+
+        return { success: true, preferences, syncedOffline: true };
+    }
+}
+

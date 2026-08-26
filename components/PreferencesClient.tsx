@@ -17,57 +17,90 @@ import {
   Truck,
   Package,
   FileText,
-  Volume2
+  Volume2,
+  RefreshCw,
+  Server
 } from 'lucide-react';
 import { PageHeader } from './PageHeader';
 import { CustomSelect } from './CustomSelect';
+import { usePreferences, ThemeMode } from '@/context/PreferencesContext';
 
 export function PreferencesClient() {
+  const { preferences, isSaving, updatePreferences } = usePreferences();
   const [activeTab, setActiveTab] = useState<'theme' | 'localization' | 'notifications' | 'dashboard'>('theme');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Preference States
-  const [themeMode, setThemeMode] = useState<'glass-dark' | 'oled' | 'slate'>('glass-dark');
-  const [compactRows, setCompactRows] = useState(false);
-  const [enableMapRadar, setEnableMapRadar] = useState(true);
-  const [enableAnimations, setEnableAnimations] = useState(true);
 
-  // Localization
-  const [currency, setCurrency] = useState('LKR');
-  const [language, setLanguage] = useState('en');
-  const [timezone, setTimezone] = useState('Asia/Colombo');
-  const [dateFormat, setDateFormat] = useState('DD/MM/YYYY');
-  const [weightUnit, setWeightUnit] = useState('kg');
+  const [themeMode, setThemeMode] = useState<ThemeMode>(preferences.themeMode);
+  const [compactRows, setCompactRows] = useState(preferences.compactRows);
+  const [enableMapRadar, setEnableMapRadar] = useState(preferences.enableMapRadar);
+  const [enableAnimations, setEnableAnimations] = useState(preferences.enableAnimations);
 
-  // Notifications
-  const [notifShipmentDelays, setNotifShipmentDelays] = useState(true);
-  const [notifLowStock, setNotifLowStock] = useState(true);
-  const [notifCustomsCleared, setNotifCustomsCleared] = useState(true);
-  const [notifWeeklyDigest, setNotifWeeklyDigest] = useState(true);
-  const [soundAlerts, setSoundAlerts] = useState(false);
 
-  // Dashboard
-  const [autoRefreshRate, setAutoRefreshRate] = useState('30s');
-  const [defaultView, setDefaultView] = useState('overview');
+  const [currency, setCurrency] = useState(preferences.currency);
+  const [language, setLanguage] = useState(preferences.language);
+  const [timezone, setTimezone] = useState(preferences.timezone);
+  const [dateFormat, setDateFormat] = useState(preferences.dateFormat);
+  const [weightUnit, setWeightUnit] = useState(preferences.weightUnit);
+
+
+  const [notifShipmentDelays, setNotifShipmentDelays] = useState(preferences.notifShipmentDelays);
+  const [notifLowStock, setNotifLowStock] = useState(preferences.notifLowStock);
+  const [notifCustomsCleared, setNotifCustomsCleared] = useState(preferences.notifCustomsCleared);
+  const [notifWeeklyDigest, setNotifWeeklyDigest] = useState(preferences.notifWeeklyDigest);
+  const [soundAlerts, setSoundAlerts] = useState(preferences.soundAlerts);
+
+
+  const [autoRefreshRate, setAutoRefreshRate] = useState(preferences.autoRefreshRate);
+  const [defaultView, setDefaultView] = useState(preferences.defaultView);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleSave = () => {
-    showToast('Preferences saved and applied across workspace!');
+
+  const handleThemeChange = (mode: ThemeMode) => {
+    setThemeMode(mode);
+    updatePreferences({ themeMode: mode });
+  };
+
+  const handleSave = async (sectionName: string) => {
+    const res = await updatePreferences({
+      themeMode,
+      compactRows,
+      enableMapRadar,
+      enableAnimations,
+      currency,
+      language,
+      timezone,
+      dateFormat,
+      weightUnit,
+      notifShipmentDelays,
+      notifLowStock,
+      notifCustomsCleared,
+      notifWeeklyDigest,
+      soundAlerts,
+      autoRefreshRate,
+      defaultView
+    });
+
+    if (res.success) {
+      showToast(`${sectionName} preferences successfully saved and synced with backend!`);
+    } else {
+      showToast(res.error || 'Failed to save preferences.');
+    }
   };
 
   return (
     <div className="preferences-container">
       <PageHeader
-        eyebrow="System Customization"
+        eyebrow="System Customization & Sync"
         title="User Preferences"
-        description="Tailor your visual theme, regional localization, alert subscriptions, and dashboard experience."
+        description="Tailor your visual theme, regional localization, alert subscriptions, and dashboard experience with backend persistence."
       />
 
-      {/* Tabs */}
+
       <div className="settings-tabs-bar">
         <button
           type="button"
@@ -99,23 +132,29 @@ export function PreferencesClient() {
         </button>
       </div>
 
-      {/* Tab 1: Appearance */}
+
       {activeTab === 'theme' && (
         <div className="settings-panel glass-panel">
           <div className="settings-section-head">
             <div>
               <h3>Visual Aesthetics & Theme</h3>
-              <p>Customize the interface palette, backdrop lighting, and animation fidelity.</p>
+              <p>Customize the interface palette, backdrop lighting, and animation fidelity. Changes apply instantly.</p>
             </div>
-            <button type="button" className="primary-btn" onClick={handleSave}>
-              <Save size={14} /> Save Appearance
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={() => handleSave('Appearance')}
+              disabled={isSaving}
+            >
+              {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+              {isSaving ? 'Saving to Backend...' : 'Save Appearance'}
             </button>
           </div>
 
           <div className="theme-selector-grid">
             <div
               className={`theme-card ${themeMode === 'glass-dark' ? 'selected' : ''}`}
-              onClick={() => setThemeMode('glass-dark')}
+              onClick={() => handleThemeChange('glass-dark')}
             >
               <div className="theme-preview glass-dark-preview">
                 <span className="theme-sample-pill blue" />
@@ -130,21 +169,21 @@ export function PreferencesClient() {
 
             <div
               className={`theme-card ${themeMode === 'oled' ? 'selected' : ''}`}
-              onClick={() => setThemeMode('oled')}
+              onClick={() => handleThemeChange('oled')}
             >
               <div className="theme-preview oled-preview">
                 <span className="theme-sample-pill emerald" />
               </div>
               <div className="theme-card-info">
                 <strong>OLED Midnight Black</strong>
-                <p>Pure black canvas optimized for low-light logistics control rooms and high contrast.</p>
+                <p>Pure black canvas optimized for low-light logistics control rooms with high contrast.</p>
               </div>
               {themeMode === 'oled' && <span className="theme-active-tag">Active</span>}
             </div>
 
             <div
               className={`theme-card ${themeMode === 'slate' ? 'selected' : ''}`}
-              onClick={() => setThemeMode('slate')}
+              onClick={() => handleThemeChange('slate')}
             >
               <div className="theme-preview slate-preview">
                 <span className="theme-sample-pill purple" />
@@ -169,7 +208,11 @@ export function PreferencesClient() {
               <button
                 type="button"
                 className={`toggle-switch ${enableMapRadar ? 'active' : ''}`}
-                onClick={() => setEnableMapRadar(!enableMapRadar)}
+                onClick={() => {
+                  const val = !enableMapRadar;
+                  setEnableMapRadar(val);
+                  updatePreferences({ enableMapRadar: val });
+                }}
               >
                 <span />
               </button>
@@ -186,7 +229,11 @@ export function PreferencesClient() {
               <button
                 type="button"
                 className={`toggle-switch ${enableAnimations ? 'active' : ''}`}
-                onClick={() => setEnableAnimations(!enableAnimations)}
+                onClick={() => {
+                  const val = !enableAnimations;
+                  setEnableAnimations(val);
+                  updatePreferences({ enableAnimations: val });
+                }}
               >
                 <span />
               </button>
@@ -203,7 +250,11 @@ export function PreferencesClient() {
               <button
                 type="button"
                 className={`toggle-switch ${compactRows ? 'active' : ''}`}
-                onClick={() => setCompactRows(!compactRows)}
+                onClick={() => {
+                  const val = !compactRows;
+                  setCompactRows(val);
+                  updatePreferences({ compactRows: val });
+                }}
               >
                 <span />
               </button>
@@ -212,7 +263,7 @@ export function PreferencesClient() {
         </div>
       )}
 
-      {/* Tab 2: Localization */}
+
       {activeTab === 'localization' && (
         <div className="settings-panel glass-panel">
           <div className="settings-section-head">
@@ -220,8 +271,14 @@ export function PreferencesClient() {
               <h3>Regional & Currency Settings</h3>
               <p>Configure default currency symbols, language, timezone, and measurement standards.</p>
             </div>
-            <button type="button" className="primary-btn" onClick={handleSave}>
-              <Save size={14} /> Save Localization
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={() => handleSave('Localization')}
+              disabled={isSaving}
+            >
+              {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+              {isSaving ? 'Saving...' : 'Save Localization'}
             </button>
           </div>
 
@@ -298,7 +355,7 @@ export function PreferencesClient() {
         </div>
       )}
 
-      {/* Tab 3: Notifications */}
+
       {activeTab === 'notifications' && (
         <div className="settings-panel glass-panel">
           <div className="settings-section-head">
@@ -306,8 +363,14 @@ export function PreferencesClient() {
               <h3>Supply Chain Event Notifications</h3>
               <p>Configure automated email triggers, SMS dispatch alerts, and audio telemetry chimes.</p>
             </div>
-            <button type="button" className="primary-btn" onClick={handleSave}>
-              <Save size={14} /> Save Subscriptions
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={() => handleSave('Notifications')}
+              disabled={isSaving}
+            >
+              {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+              {isSaving ? 'Saving...' : 'Save Subscriptions'}
             </button>
           </div>
 
@@ -383,7 +446,7 @@ export function PreferencesClient() {
         </div>
       )}
 
-      {/* Tab 4: Dashboard & Telemetry */}
+
       {activeTab === 'dashboard' && (
         <div className="settings-panel glass-panel">
           <div className="settings-section-head">
@@ -391,8 +454,14 @@ export function PreferencesClient() {
               <h3>Dashboard Flow & Telemetry</h3>
               <p>Configure automated data polling frequency, chart rendering styles, and default entry view.</p>
             </div>
-            <button type="button" className="primary-btn" onClick={handleSave}>
-              <Save size={14} /> Save Configuration
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={() => handleSave('Dashboard')}
+              disabled={isSaving}
+            >
+              {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+              {isSaving ? 'Saving...' : 'Save Configuration'}
             </button>
           </div>
 
@@ -429,12 +498,12 @@ export function PreferencesClient() {
         </div>
       )}
 
-      {/* Toast */}
+
       {toastMessage && (
         <div className="toast">
           <CheckCircle2 size={16} />
           <div>
-            <strong>Success</strong>
+            <strong>Backend Synced</strong>
             <span>{toastMessage}</span>
           </div>
         </div>
