@@ -27,8 +27,8 @@ import {
   Layers,
   Sparkles
 } from 'lucide-react';
-import { useAuth, DEMO_USERS } from '@/context/AuthContext';
 import { CustomSelect } from './CustomSelect';
+import { loginUser, registerUser } from '@/app/services/apiService';
 
 interface AuthFormProps {
   initialMode?: 'login' | 'register';
@@ -70,8 +70,6 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect') || '/';
-
-  const { login, register, demoLogin } = useAuth();
 
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [loading, setLoading] = useState(false);
@@ -138,12 +136,21 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
     }
 
     setLoading(true);
-    const result = await login(loginEmail, loginPassword, rememberMe);
+
+    const result = await loginUser(
+      loginEmail,
+      loginPassword,
+      rememberMe);
+
     if (result.success) {
       setSuccessMessage('Authentication successful! Redirecting to SCMS Command Center...');
+
+      localStorage.setItem('scms_user', JSON.stringify(result));
+
       setTimeout(() => {
         router.push(redirectUrl);
       }, 700);
+
     } else {
       setErrorMessage(result.error || 'Invalid email or password.');
       setLoading(false);
@@ -176,7 +183,8 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
     }
 
     setLoading(true);
-    const result = await register({
+
+    const result = await registerUser({
       firstName,
       lastName,
       email: registerEmail,
@@ -190,25 +198,17 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
 
     if (result.success) {
       setSuccessMessage('Account registered successfully! Redirecting to SCMS workspace...');
+
       setTimeout(() => {
-        router.push(redirectUrl);
-      }, 700);
+        setMode('login');
+        setLoading(false);
+        setSuccessMessage(null);
+      }, 1500);
+
     } else {
       setErrorMessage(result.error || 'Registration failed. Please try again.');
       setLoading(false);
     }
-  };
-
-  const handleQuickDemoSelect = async (demoUser: typeof DEMO_USERS[0]) => {
-    setLoginEmail(demoUser.email);
-    setLoginPassword('DemoPassword123!');
-    setErrorMessage(null);
-    setSuccessMessage(`Logged in as ${demoUser.name} (${demoUser.role})`);
-    setLoading(true);
-    await demoLogin(demoUser.id);
-    setTimeout(() => {
-      router.push(redirectUrl);
-    }, 600);
   };
 
   const handleForgotSubmit = (e: React.FormEvent) => {
@@ -432,31 +432,6 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
                 )}
               </button>
 
-              {/* Quick Demo Logins Box */}
-              <div className="demo-accounts-box">
-                <div className="demo-accounts-header">
-                  <span><Zap size={13} /> 1-Click Demo Profiles</span>
-                  <small style={{ color: '#64748b', fontSize: 10 }}>Click to auto-fill & login</small>
-                </div>
-                <div className="demo-accounts-grid">
-                  {DEMO_USERS.map((demo) => (
-                    <button
-                      key={demo.id}
-                      type="button"
-                      className="demo-account-chip"
-                      onClick={() => handleQuickDemoSelect(demo)}
-                      title={`Login as ${demo.name} (${demo.role})`}
-                    >
-                      <div className="demo-chip-avatar">{demo.avatar}</div>
-                      <div className="demo-chip-info">
-                        <strong>{demo.name}</strong>
-                        <small>{demo.role.split('&')[0]}</small>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Enterprise SSO Divider */}
               <div className="auth-divider">
                 <span>Or Continue With Enterprise SSO</span>
@@ -467,7 +442,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
                   type="button"
                   className="auth-sso-btn"
                   onClick={() => {
-                    handleQuickDemoSelect(DEMO_USERS[0]);
+
                   }}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24">
@@ -482,7 +457,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
                   type="button"
                   className="auth-sso-btn"
                   onClick={() => {
-                    handleQuickDemoSelect(DEMO_USERS[1]);
+
                   }}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none">

@@ -2,7 +2,41 @@ const BASE_URL = "http://localhost:8080/scms-web-1.0/api";
 
 const headers = {
     'Content-Type': 'application/json',
-}
+};
+
+export const loginUser = async (credentials: { email: string; password: string }) => {
+    try {
+        const response = await fetch(`${BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(credentials)
+        });
+
+        if (!response.ok) throw new Error('Failed to login');
+        return await response.json();
+    } catch (error) {
+
+        console.info('Backend auth endpoint unreachable, continuing in client authentication mode.');
+        return null;
+    }
+};
+
+export const registerUser = async (userData: any) => {
+    try {
+        const response = await fetch(`${BASE_URL}/auth/register`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(userData)
+        });
+
+        if (!response.ok) throw new Error('Failed to register');
+        return await response.json();
+    } catch (error) {
+
+        console.info('Backend registration endpoint unreachable, continuing in client authentication mode.');
+        return null;
+    }
+};
 
 export const getAllShipments = async () => {
     try {
@@ -18,7 +52,27 @@ export const getAllShipments = async () => {
         console.error(error);
         return [];
     }
-}
+};
+
+export const getAllInvetory = async () => {
+    const res = await fetch(`${BASE_URL}/inventory`, {
+        method: 'GET',
+        headers
+    });
+
+    if (!res.ok) throw new Error('Failed to fetch inventory');
+    return await res.json();
+};
+
+export const getAllCustomsDocs = async () => {
+    const res = await fetch(`${BASE_URL}/customs`, {
+        method: 'GET',
+        headers
+    });
+
+    if (!res.ok) throw new Error('Failed to fetch customs docs');
+    return await res.json();
+};
 
 export const createShipment = async (shipmentData: any) => {
     try {
@@ -36,7 +90,7 @@ export const createShipment = async (shipmentData: any) => {
         console.error(error);
         return null;
     }
-}
+};
 
 export const updateShipmentStatus = async (id: any, status: any) => {
     const res = await fetch(`${BASE_URL}/shipments/${id}/status?status=${status}`, {
@@ -46,7 +100,7 @@ export const updateShipmentStatus = async (id: any, status: any) => {
 
     if (!res.ok) throw new Error('Failed to update shipment status');
     return await res.json();
-}
+};
 
 export const getAllVendors = async () => {
     try {
@@ -63,41 +117,21 @@ export const getAllVendors = async () => {
         console.error(error);
         return []
     }
+};
+
+export const createVendor = async (data: any) => {
+    const res = await fetch(`${BASE_URL}/vendors`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error('Failed to create vendor')
+    return await res.json();
+
 }
 
-export const loginUser = async (credentials: { email: string; password: string }) => {
-    try {
-        const response = await fetch(`${BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(credentials)
-        });
 
-        if (!response.ok) throw new Error('Failed to login');
-        return await response.json();
-    } catch (error) {
-
-        console.info('Backend auth endpoint unreachable, continuing in client authentication mode.');
-        return null;
-    }
-}
-
-export const registerUser = async (userData: any) => {
-    try {
-        const response = await fetch(`${BASE_URL}/auth/register`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(userData)
-        });
-
-        if (!response.ok) throw new Error('Failed to register');
-        return await response.json();
-    } catch (error) {
-
-        console.info('Backend registration endpoint unreachable, continuing in client authentication mode.');
-        return null;
-    }
-}
 
 export const verifySession = async (token: string) => {
     try {
@@ -114,7 +148,7 @@ export const verifySession = async (token: string) => {
     } catch (error) {
         return null;
     }
-}
+};
 
 export const getUserPreferences = async (userId: string) => {
     try {
@@ -129,7 +163,7 @@ export const getUserPreferences = async (userId: string) => {
 
         return null;
     }
-}
+};
 
 export const updateUserPreferences = async (userId: string, preferences: any) => {
     try {
@@ -145,5 +179,5 @@ export const updateUserPreferences = async (userId: string, preferences: any) =>
 
         return { success: true, preferences, syncedOffline: true };
     }
-}
+};
 

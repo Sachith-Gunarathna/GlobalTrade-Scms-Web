@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   CalendarDays,
   ChevronRight,
@@ -31,6 +31,7 @@ import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
 import { CustomSelect } from './CustomSelect';
 import type { Shipment, ShipmentStatus } from '@/types';
+import { createShipment, getAllShipments } from '@/app/services/apiService';
 
 const statuses = ['All', 'In Transit', 'Delayed', 'Delivered', 'Pending'];
 
@@ -105,7 +106,24 @@ export function ShipmentsClient({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // New Shipment Form State
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+
+        const data = await getAllShipments();
+
+        if (data && DataTransfer.length > 0) {
+          setShipmentsList(data);
+        }
+
+      } catch (error) {
+        console.error("Failed to fetch shipments from backend:", error);
+      }
+    };
+    loadData();
+  }, []);
+
+
   const [newShipment, setNewShipment] = useState({
     id: `SHP-${Math.floor(78400 + Math.random() * 900)}`,
     origin: 'Colombo, LK',
@@ -138,32 +156,42 @@ export function ShipmentsClient({
     setTimeout(() => setToastMessage(null), 3200);
   };
 
-  const handleCreateShipment = (e: React.FormEvent) => {
+  const handleCreateShipment = async (e: React.FormEvent) => {
     e.preventDefault();
-    const created: Shipment = {
-      ...newShipment,
-      value: Number(newShipment.value),
-      progress: Number(newShipment.progress),
-      updated: 'Just now'
-    };
 
-    setShipmentsList([created, ...shipmentsList]);
-    setIsCreateOpen(false);
-    showToast(`Shipment ${created.id} created and dispatched successfully!`);
+    try {
 
-    // Reset form with new ID
-    setNewShipment({
-      id: `SHP-${Math.floor(78400 + Math.random() * 900)}`,
-      origin: 'Colombo, LK',
-      destination: 'Hamburg, DE',
-      status: 'In Transit',
-      eta: new Date(Date.now() + 86400000 * 4).toISOString().split('T')[0],
-      carrier: 'Hapag-Lloyd',
-      vessel: 'Ceylon Express',
-      value: 210000,
-      weight: '17.8 t',
-      progress: 15,
-    });
+      const payload = {
+        trackingNumber: newShipment.id,
+        origin: newShipment.origin,
+        destination: newShipment.destination,
+        status: newShipment.status.toUpperCase(),
+        expectedDeliveryDate: newShipment.eta + "T00:00:00",
+
+        vendor: { id: 1 }
+      };
+
+      const createdShipment: any = await createShipment(payload);
+
+      if (createdShipment) {
+
+        setShipmentsList([createdShipment, ...shipmentsList]);
+
+        setIsCreateOpen(false);
+        showToast(`Shipment ${createdShipment.trackingNumber} created and dispatched successfully!`)
+
+        setNewShipment({
+          ...newShipment,
+          id: `SHP-${Math.floor(78400 + Math.random() * 900)}`
+        });
+      }
+
+    } catch (error) {
+
+      console.error(error);
+      alert("Failed to dispatch shipment. Please check the backend connection.");
+    }
+
   };
 
   return <>
@@ -182,12 +210,11 @@ export function ShipmentsClient({
       }
     />
 
-    {/* Top KPI Cards Grid */}
     <section className="kpi-grid">
       <article className="kpi-card glass-panel">
         <div className="kpi-top">
           <span className="kpi-icon kpi-0"><Ship size={20} /></span>
-          <span className="trend positive"><ArrowUpRight size={13}/> Active</span>
+          <span className="trend positive"><ArrowUpRight size={13} /> Active</span>
         </div>
         <div className="kpi-bottom">
           <div>
@@ -201,7 +228,7 @@ export function ShipmentsClient({
       <article className="kpi-card glass-panel">
         <div className="kpi-top">
           <span className="kpi-icon kpi-3"><AlertTriangle size={20} /></span>
-          <span className="trend negative"><ArrowDownRight size={13}/> Attention</span>
+          <span className="trend negative"><ArrowDownRight size={13} /> Attention</span>
         </div>
         <div className="kpi-bottom">
           <div>
@@ -215,7 +242,7 @@ export function ShipmentsClient({
       <article className="kpi-card glass-panel">
         <div className="kpi-top">
           <span className="kpi-icon kpi-1"><PackageCheck size={20} /></span>
-          <span className="trend positive"><CheckCircle2 size={13}/> On Schedule</span>
+          <span className="trend positive"><CheckCircle2 size={13} /> On Schedule</span>
         </div>
         <div className="kpi-bottom">
           <div>
@@ -229,7 +256,7 @@ export function ShipmentsClient({
       <article className="kpi-card glass-panel">
         <div className="kpi-top">
           <span className="kpi-icon kpi-2"><Gauge size={20} /></span>
-          <span className="trend positive"><ArrowUpRight size={13}/> +1.6% SLA</span>
+          <span className="trend positive"><ArrowUpRight size={13} /> +1.6% SLA</span>
         </div>
         <div className="kpi-bottom">
           <div>
@@ -241,11 +268,10 @@ export function ShipmentsClient({
       </article>
     </section>
 
-    {/* Shipments Data Panel */}
     <section className="panel glass-panel data-panel">
       <div className="table-toolbar">
         <div className="toolbar-search">
-          <Search size={16}/>
+          <Search size={16} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search shipment ID, route, vessel or carrier..." />
         </div>
         <CustomSelect
@@ -270,7 +296,7 @@ export function ShipmentsClient({
           ariaLabel="Filter by destination"
         />
         <div className="date-filter">
-          <CalendarDays size={15}/>
+          <CalendarDays size={15} />
           <input aria-label="ETA from date" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
           <span className="date-sep">→</span>
           <input aria-label="ETA to date" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
@@ -296,7 +322,7 @@ export function ShipmentsClient({
         <span>
           Showing <strong>{filtered.length}</strong> of <strong>{shipmentsList.length}</strong> tracked shipments
         </span>
-        <button><SlidersHorizontal size={13}/> Customize Columns</button>
+        <button><SlidersHorizontal size={13} /> Customize Columns</button>
       </div>
 
       <div className="table-wrap">
@@ -362,7 +388,7 @@ export function ShipmentsClient({
                   <td>
                     <div className="cargo-value-wrap">
                       <span className="cargo-value-amount">${s.value.toLocaleString()}</span>
-                      <span className="cargo-weight-pill"><Scale size={10} style={{display: 'inline', marginRight: 3}} />{s.weight}</span>
+                      <span className="cargo-weight-pill"><Scale size={10} style={{ display: 'inline', marginRight: 3 }} />{s.weight}</span>
                     </div>
                   </td>
                   <td>
@@ -390,9 +416,9 @@ export function ShipmentsClient({
     {/* Detail Modal */}
     {selected && <Modal title={`Shipment ${selected.id}`} subtitle={`${selected.origin} → ${selected.destination}`} onClose={() => setSelected(null)}>
       <div className="detail-hero">
-        <span className="detail-icon"><Ship size={26}/></span>
+        <span className="detail-icon"><Ship size={26} /></span>
         <div>
-          <StatusBadge status={selected.status}/>
+          <StatusBadge status={selected.status} />
           <h3>{selected.carrier}</h3>
           <p>{selected.vessel}</p>
         </div>
@@ -402,24 +428,23 @@ export function ShipmentsClient({
         </div>
       </div>
       <div className="detail-grid">
-        <div><span><CalendarDays size={14}/> Estimated Arrival (ETA)</span><strong>{new Date(selected.eta).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</strong></div>
-        <div><span><Scale size={14}/> Gross Cargo Weight</span><strong>{selected.weight}</strong></div>
-        <div><span><MapPin size={14}/> Origin Port</span><strong>{getFlag(selected.origin)} {selected.origin}</strong></div>
-        <div><span><MapPin size={14}/> Destination Port / Depot</span><strong>{getFlag(selected.destination)} {selected.destination}</strong></div>
+        <div><span><CalendarDays size={14} /> Estimated Arrival (ETA)</span><strong>{new Date(selected.eta).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</strong></div>
+        <div><span><Scale size={14} /> Gross Cargo Weight</span><strong>{selected.weight}</strong></div>
+        <div><span><MapPin size={14} /> Origin Port</span><strong>{getFlag(selected.origin)} {selected.origin}</strong></div>
+        <div><span><MapPin size={14} /> Destination Port / Depot</span><strong>{getFlag(selected.destination)} {selected.destination}</strong></div>
       </div>
       <div className="shipment-progress">
         <div className="progress-label"><span>Transit Fulfillment Status</span><strong>{selected.progress}% completed</strong></div>
-        <div className="progress-track"><i style={{width: `${selected.progress}%`}}/></div>
+        <div className="progress-track"><i style={{ width: `${selected.progress}%` }} /></div>
         <div className="route-points">
-          <span className="done"><i/> Origin Dispatched</span>
-          <span className={selected.progress >= 50 ? 'done' : ''}><i/> Port & Customs Cleared</span>
-          <span className={selected.progress >= 95 ? 'done' : ''}><i/> Destination Arrival</span>
+          <span className="done"><i /> Origin Dispatched</span>
+          <span className={selected.progress >= 50 ? 'done' : ''}><i /> Port & Customs Cleared</span>
+          <span className={selected.progress >= 95 ? 'done' : ''}><i /> Destination Arrival</span>
         </div>
       </div>
     </Modal>}
 
 
-    {/* Create Shipment Modal Form */}
     {isCreateOpen && (
       <Modal
         title="Create New Shipment"
@@ -541,7 +566,6 @@ export function ShipmentsClient({
       </Modal>
     )}
 
-    {/* Toast notification */}
     {toastMessage && (
       <div className="toast">
         <CheckCircle2 size={16} />
