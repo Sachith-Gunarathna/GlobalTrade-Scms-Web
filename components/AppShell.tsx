@@ -31,11 +31,11 @@ import {
   X
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
 import shipments from '@/data/shipments.json';
 import orders from '@/data/orders.json';
 import inventory from '@/data/inventory.json';
 import suppliers from '@/data/suppliers.json';
+import { userLogOut } from '@/app/services/apiService';
 
 const nav = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, keywords: 'home overview kpi command center sri lanka routes' },
@@ -71,13 +71,15 @@ const allNav = [...nav, ...extraNav];
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth();
 
   const isAuthRoute =
     pathname === '/login' ||
     pathname === '/register' ||
     pathname === '/signin' ||
     pathname === '/signup';
+
+  const [user, setUser] = useState<any>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -118,6 +120,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [query]);
 
   useEffect(() => {
+
+    const storedUserData = localStorage.getItem('scms_user');
+
+    if (storedUserData) {
+      const parsedData = JSON.parse(storedUserData);
+      setUser(parsedData);
+      setToken(parsedData.token);
+    } else if (!isAuthRoute) {
+      router.push('/login');
+    };
+
     const saved = window.localStorage.getItem('globaltrade-sidebar-collapsed');
     if (saved === 'true') setCollapsed(true);
 
@@ -135,7 +148,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [pathname, isAuthRoute, router]);
+
+  const handleLogOut = async () => {
+    try {
+
+      if (token) {
+        await userLogOut(token);
+      }
+
+    } catch (error) {
+      console.error("Backend logout failed, clearing local session anyway.");
+    } finally {
+      localStorage.removeItem('scms_user');
+      setUser(null);
+      setToken(null);
+      setProfileOpen(false);
+
+      router.push('/login');
+    }
+  };
 
   const toggleCollapsed = () => {
     setCollapsed((current) => {
@@ -303,7 +335,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     className="dropdown-nav-btn danger-text"
                     onClick={() => {
                       setProfileOpen(false);
-                      logout();
+                      handleLogOut();
                       router.push('/login');
                     }}
                     style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}

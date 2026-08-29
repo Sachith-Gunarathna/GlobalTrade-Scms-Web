@@ -1,23 +1,45 @@
-const BASE_URL = "http://localhost:8080/scms-web-1.0/api";
+const BASE_URL = "http://localhost:8080/Global-Trade-Scms/v1";
 
 const headers = {
     'Content-Type': 'application/json',
 };
 
-export const loginUser = async (credentials: { email: string; password: string }) => {
+export const loginUser = async (credentials: {
+    email: string;
+    password: string;
+    rememberMe: boolean;
+}) => {
+
     try {
+
         const response = await fetch(`${BASE_URL}/auth/login`, {
             method: 'POST',
             headers,
-            body: JSON.stringify(credentials)
+            body: JSON.stringify({
+                email: credentials.email.trim(),
+                password: credentials.password
+            })
         });
 
-        if (!response.ok) throw new Error('Failed to login');
-        return await response.json();
+        const data = await response.json();
+
+        if (!response.ok) {
+            return {
+                success: false,
+                error: data.error || 'Invalid email or password.'
+            };
+        }
+
+        return data;
+
     } catch (error) {
 
-        console.info('Backend auth endpoint unreachable, continuing in client authentication mode.');
-        return null;
+        console.error('Login request failed:', error);
+
+        return {
+            success: false,
+            error: 'Unable to connect to the backend server.'
+        };
     }
 };
 
@@ -181,3 +203,34 @@ export const updateUserPreferences = async (userId: string, preferences: any) =>
     }
 };
 
+export const userLogOut = async (token: string) => {
+    try {
+        const response = await fetch(`${BASE_URL}/auth/logout`, {
+            method: 'POST',
+            headers: {
+                ...headers,
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Failed to logout');
+        return await response.json();
+    } catch (error) {
+        return null;
+    }
+};
+
+export const updateProfileToBackend = async (profileData: any) => {
+    try {
+        const response = await fetch(`${BASE_URL}/auth/profile`, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify(profileData)
+        });
+        if (!response.ok) throw new Error('Failed to update profile in DB');
+        return await response.json();
+    } catch (error) {
+        console.error(error);
+        return { success: false };
+    }
+};

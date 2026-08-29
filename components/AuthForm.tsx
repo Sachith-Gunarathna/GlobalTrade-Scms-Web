@@ -137,12 +137,13 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
 
     setLoading(true);
 
-    const result = await loginUser(
-      loginEmail,
-      loginPassword,
-      rememberMe);
+    const result = await loginUser({
+      email: loginEmail,
+      password: loginPassword,
+      rememberMe
+    });
 
-    if (result.success) {
+    if (result?.success) {
       setSuccessMessage('Authentication successful! Redirecting to SCMS Command Center...');
 
       localStorage.setItem('scms_user', JSON.stringify(result));
@@ -152,7 +153,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
       }, 700);
 
     } else {
-      setErrorMessage(result.error || 'Invalid email or password.');
+      setErrorMessage(result?.error || 'Invalid email or password.');
       setLoading(false);
     }
   };
@@ -187,16 +188,18 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
     const result = await registerUser({
       firstName,
       lastName,
-      email: registerEmail,
+      email: registerEmail.trim(),
       password: registerPassword,
-      phone: phone || '+94 77 000 0000',
-      organization,
+
+      mobileNumber: phone,
+      organizationOrCompany: organization,
+      primaryHub: hub,
+
       role,
-      department,
-      hub
+      department
     });
 
-    if (result.success) {
+    if (result?.success) {
       setSuccessMessage('Account registered successfully! Redirecting to SCMS workspace...');
 
       setTimeout(() => {
@@ -206,7 +209,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
       }, 1500);
 
     } else {
-      setErrorMessage(result.error || 'Registration failed. Please try again.');
+      setErrorMessage(result?.error || 'Registration failed. Please try again.');
       setLoading(false);
     }
   };

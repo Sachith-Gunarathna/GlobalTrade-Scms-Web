@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   User,
   Shield,
@@ -23,14 +23,13 @@ import {
   Check
 } from 'lucide-react';
 import { PageHeader } from './PageHeader';
-import { useAuth } from '@/context/AuthContext';
+import { updateProfileToBackend } from '@/app/services/apiService';
 
 export function AccountClient() {
-  const { user, updateUserProfile } = useAuth();
+  const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'permissions' | 'sessions'>('profile');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Form State initialized from active user
   const [formData, setFormData] = useState({
     firstName: user?.firstName || 'Alex',
     lastName: user?.lastName || 'Grant',
@@ -43,20 +42,27 @@ export function AccountClient() {
     bio: 'Lead supply chain director overseeing island-wide distribution, port transshipment, and domestic expressway freight corridors.',
   });
 
-  React.useEffect(() => {
-    if (user) {
+
+  useEffect(() => {
+
+    const storedUser = localStorage.getItem('scms_user');
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+
       setFormData((prev) => ({
         ...prev,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        title: user.title,
-        email: user.email,
-        phone: user.phone || prev.phone,
-        location: user.hub || prev.location,
-        department: user.department || prev.department
+        firstName: parsedUser.firstName || 'Alex',
+        lastName: parsedUser.lastName || 'Grant',
+        title: parsedUser.role || prev.title,
+        email: parsedUser.username || parsedUser.email || prev.email,
+        phone: parsedUser.phone || prev.phone,
+        location: parsedUser.hub || prev.location,
+        department: parsedUser.department || prev.department
       }));
     }
-  }, [user]);
+
+  }, []);
 
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
   const [biometricEnabled, setBiometricEnabled] = useState(true);
@@ -66,9 +72,12 @@ export function AccountClient() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateUserProfile({
+
+
+    const updatedUser = {
+      ...user,
       firstName: formData.firstName,
       lastName: formData.lastName,
       name: `${formData.firstName} ${formData.lastName}`.trim(),
@@ -77,8 +86,20 @@ export function AccountClient() {
       phone: formData.phone,
       department: formData.department,
       hub: formData.location
-    });
-    showToast('Account details updated successfully!');
+    };
+
+    const result = await updateProfileToBackend(updatedUser);
+    if (result?.success) {
+      setUser(updatedUser);
+      localStorage.setItem('scms_user', JSON.stringify(updatedUser));
+      showToast('Account details updated successfully!');
+    } else {
+      showToast('Failed to save details to Database.');
+    }
+
+
+
+
   };
 
 

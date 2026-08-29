@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth } from './AuthContext';
 import { getUserPreferences, updateUserPreferences } from '@/app/services/apiService';
 
 export type ThemeMode = 'glass-dark' | 'oled' | 'slate';
@@ -70,7 +69,6 @@ interface PreferencesContextType {
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
 
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -85,6 +83,15 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     root.setAttribute('data-map-radar', prefs.enableMapRadar ? 'true' : 'false');
   };
 
+  const getCurrentUserId = () => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem("scms_user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.email || parsed.id;
+      }
+    }
+  };
 
   useEffect(() => {
     const loadPreferences = async () => {
@@ -92,9 +99,10 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       try {
         let loadedPrefs: UserPreferences | null = null;
 
+        const userId = getCurrentUserId();
 
-        if (user && user.id) {
-          const apiData = await getUserPreferences(user.id);
+        if (userId) {
+          const apiData = await getUserPreferences(userId);
           if (apiData && apiData.preferences) {
             loadedPrefs = { ...DEFAULT_PREFERENCES, ...apiData.preferences };
           }
@@ -125,7 +133,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     };
 
     loadPreferences();
-  }, [user?.id]);
+  }, []);
 
 
   const updatePreferences = async (
@@ -141,7 +149,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(updated));
 
 
-      const userId = user?.id || 'demo-1';
+      const userId = getCurrentUserId();
       await updateUserPreferences(userId, updated);
 
       return { success: true };
