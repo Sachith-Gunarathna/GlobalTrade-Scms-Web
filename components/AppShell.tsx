@@ -309,14 +309,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             <div className="dropdown-wrap profile-wrap">
               <button className="profile-button" onClick={() => { setProfileOpen((v) => !v); setNotifOpen(false); }}>
-                <span className="avatar">{user?.avatar || 'AG'}</span>
-                <span className="profile-meta"><strong>{user?.name || 'Alex Grant'}</strong><small>{user?.role?.split('&')[0] || user?.title || 'Operations Director'}</small></span>
+                <span className="avatar">{user?.avatar || `${user?.firstName[0] || 'U'}${user?.lastName[0] || 'G'}`}</span>
+                <span className="profile-meta"><strong>{user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Alex Grant'}</strong><small>{user?.role?.split('&')[0] || user?.title || 'Operations Director'}</small></span>
                 <ChevronDown size={15} />
               </button>
               {profileOpen && (
                 <div className="dropdown-panel profile-panel glass">
                   <div style={{ padding: '8px 12px 10px', borderBottom: '1px solid var(--line)', marginBottom: '6px' }}>
-                    <strong style={{ display: 'block', fontSize: '12px', color: '#f1f5f9' }}>{user?.name || 'Alex Grant'}</strong>
+                    <strong style={{ display: 'block', fontSize: '12px', color: '#f1f5f9' }}>{user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Alex Grant'}</strong>
                     <small style={{ display: 'block', fontSize: '10px', color: '#7b8fa7', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email || 'alex.grant@globaltrade.lk'}</small>
                     <small style={{ display: 'block', fontSize: '9px', color: '#10b981', marginTop: '2px', fontWeight: 600 }}>{user?.hub || 'Colombo HQ'}</small>
                   </div>

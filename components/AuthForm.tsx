@@ -199,13 +199,17 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
       department
     });
 
+
+
     if (result?.success) {
       setSuccessMessage('Account registered successfully! Redirecting to SCMS workspace...');
 
+      localStorage.setItem('scms_user', JSON.stringify(result));
       setTimeout(() => {
         setMode('login');
         setLoading(false);
         setSuccessMessage(null);
+
       }, 1500);
 
     } else {
