@@ -1,21 +1,78 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Activity, CheckCircle2, Clock3, Gauge, RefreshCw, Route, ShieldAlert } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Activity,
+  BookOpen,
+  CheckCircle2,
+  Clock3,
+  Gauge,
+  RefreshCw,
+  Route,
+  Search,
+  ShieldAlert,
+  TrendingUp,
+  XCircle,
+  Zap
+} from 'lucide-react';
 import { PageHeader } from './PageHeader';
 import { applyRoutePriorities, getMonitoringData, getRoutePriorities } from '@/app/services/apiService';
+import { canAccess } from '@/app/services/roleAccess';
+import { useCurrentUser } from '@/context/AuthContext';
 import type { MonitoringSnapshot } from '@/types';
+
+/* ─── tiny inline helpers ─────────────────────────────────────────── */
+
+function fmtDate(val: string | null | undefined) {
+  if (!val) return '—';
+  const d = new Date(val);
+  return Number.isNaN(d.getTime()) ? val : d.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function SearchBox({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  return (
+    <div className="mon-search-wrap">
+      <button
+        type="button"
+        className={`mon-search-icon-btn ${value ? 'mon-search-icon-active' : ''}`}
+        onClick={() => value && onChange('')}
+        aria-label={value ? 'Clear search' : 'Search'}
+        tabIndex={value ? 0 : -1}
+      >
+        <Search size={13} className="mon-icon-search" />
+        <XCircle size={13} className="mon-icon-clear" />
+      </button>
+      <input
+        className="mon-search-input"
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
+/* ─── main component ──────────────────────────────────────────────── */
 
 export function MonitoringClient() {
   const [snapshot, setSnapshot] = useState<MonitoringSnapshot | null>(null);
   const [routes, setRoutes] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<string | null>(null);
-  const [canApplyRoutes, setCanApplyRoutes] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const user = useCurrentUser();
+  const canApplyRoutes = canAccess(user?.role, 'monitoring.routes');
 
-  const showToast = (message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(null), 3200);
+  /* search states */
+  const [timerQ, setTimerQ] = useState('');
+  const [metricQ, setMetricQ] = useState('');
+  const [auditQ, setAuditQ] = useState('');
+  const [routeQ, setRouteQ] = useState('');
+
+  const showToast = (msg: string, ok = true) => {
+    setToast({ msg, ok });
+    window.setTimeout(() => setToast(null), 3400);
   };
 
   const load = async () => {
@@ -25,70 +82,367 @@ export function MonitoringClient() {
       setSnapshot(monitoring);
       setRoutes(priorities);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Unable to load monitoring information.');
+      showToast(error instanceof Error ? error.message : 'Unable to load monitoring information.', false);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('scms_user');
-      const role = stored ? JSON.parse(stored).role : '';
-      setCanApplyRoutes(role === 'ADMIN' || role === 'LOGISTICS_COORDINATOR');
-    } catch {
-      setCanApplyRoutes(false);
-    }
-    void load();
-  }, []);
+  useEffect(() => { void load(); }, []);
 
   const applyRoutes = async () => {
+    setApplying(true);
     try {
       const result = await applyRoutePriorities();
       await load();
       showToast(`${result.updated} shipment route priorities updated.`);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Unable to apply route priorities.');
+      showToast(error instanceof Error ? error.message : 'Unable to apply route priorities.', false);
+    } finally {
+      setApplying(false);
     }
   };
 
+  /* filtered data */
+  const filteredTimers = useMemo(() => {
+    const q = timerQ.toLowerCase();
+    return (snapshot?.timers ?? []).filter(t => !q || t.info.toLowerCase().includes(q));
+  }, [snapshot, timerQ]);
+
+  const filteredMetrics = useMemo(() => {
+    const q = metricQ.toLowerCase();
+    return (snapshot?.metrics ?? []).filter(m =>
+      !q || m.type.toLowerCase().includes(q) || m.operation.toLowerCase().includes(q)
+    );
+  }, [snapshot, metricQ]);
+
+  const filteredAudit = useMemo(() => {
+    const q = auditQ.toLowerCase();
+    return (snapshot?.audit ?? []).filter(a =>
+      !q || a.action.toLowerCase().includes(q) || a.component.toLowerCase().includes(q) || a.method.toLowerCase().includes(q) || (a.performedBy ?? '').toLowerCase().includes(q)
+    );
+  }, [snapshot, auditQ]);
+
+  const filteredRoutes = useMemo(() => {
+    const q = routeQ.toLowerCase();
+    return Object.entries(routes).filter(([id]) => !q || id.toLowerCase().includes(q));
+  }, [routes, routeQ]);
+
+  /* success rate */
+  const successRate = snapshot?.metrics.length
+    ? Math.round((snapshot.metrics.filter(m => m.success).length / snapshot.metrics.length) * 100)
+    : null;
+
+  /* ── kpi data ───────────────────────────────────────────────────── */
+  const kpis = [
+    {
+      label: 'Avg Method Time',
+      value: snapshot ? `${snapshot.averageMethodDurationMs.toFixed(1)} ms` : '—',
+      icon: Gauge,
+      color: 'blue',
+      sub: 'Interceptor average'
+    },
+    {
+      label: 'Performance Records',
+      value: snapshot?.metrics.length ?? '—',
+      icon: Activity,
+      color: 'emerald',
+      sub: 'Total measurements'
+    },
+    {
+      label: 'Supply Alerts',
+      value: snapshot?.alerts.length ?? '—',
+      icon: ShieldAlert,
+      color: 'amber',
+      sub: 'Active notifications'
+    },
+    {
+      label: 'EJB Timers',
+      value: snapshot?.timers.length ?? '—',
+      icon: Clock3,
+      color: 'violet',
+      sub: 'Persistent schedules'
+    },
+    {
+      label: 'Success Rate',
+      value: successRate !== null ? `${successRate}%` : '—',
+      icon: TrendingUp,
+      color: 'cyan',
+      sub: 'Method executions'
+    },
+    {
+      label: 'Route Priorities',
+      value: Object.keys(routes).length,
+      icon: Route,
+      color: 'rose',
+      sub: 'Shipments optimised'
+    }
+  ];
+
   return (
-    <div>
+    <div className="mon-root">
       <PageHeader
         eyebrow="EJB operations"
         title="Monitoring"
-        description="Review timer services, interceptor performance metrics, audit activity, alerts, and route optimization results."
-        action={<div style={{ display: 'flex', gap: 8 }}><button className="secondary-btn" type="button" onClick={() => void load()}><RefreshCw size={15} /> Refresh</button>{canApplyRoutes && <button className="primary-btn" type="button" onClick={() => void applyRoutes()}><Route size={15} /> Apply Route Priorities</button>}</div>}
+        description="Review timer services, interceptor performance metrics, audit activity, alerts, and route optimisation results."
+        action={
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="secondary-btn" type="button" onClick={() => void load()} disabled={loading}>
+              <RefreshCw size={14} className={loading ? 'spin' : ''} />
+              {loading ? 'Loading…' : 'Refresh'}
+            </button>
+            {canApplyRoutes && (
+              <button className="primary-btn" type="button" onClick={() => void applyRoutes()} disabled={applying}>
+                <Zap size={14} />
+                {applying ? 'Applying…' : 'Apply Route Priorities'}
+              </button>
+            )}
+          </div>
+        }
       />
 
-      <div className="kpi-grid" style={{ marginBottom: 18 }}>
-        <div className="kpi-card glass-panel"><div className="kpi-icon"><Gauge size={20} /></div><div><span>Average method time</span><strong>{snapshot ? `${snapshot.averageMethodDurationMs.toFixed(2)} ms` : '—'}</strong></div></div>
-        <div className="kpi-card glass-panel"><div className="kpi-icon"><Activity size={20} /></div><div><span>Performance records</span><strong>{snapshot?.metrics.length ?? 0}</strong></div></div>
-        <div className="kpi-card glass-panel"><div className="kpi-icon"><ShieldAlert size={20} /></div><div><span>Supply alerts</span><strong>{snapshot?.alerts.length ?? 0}</strong></div></div>
-        <div className="kpi-card glass-panel"><div className="kpi-icon"><Clock3 size={20} /></div><div><span>EJB timers</span><strong>{snapshot?.timers.length ?? 0}</strong></div></div>
+      {/* ── KPI grid ─────────────────────────────────────────────── */}
+      <div className="mon-kpi-grid">
+        {kpis.map((kpi) => {
+          const Icon = kpi.icon;
+          return (
+            <article key={kpi.label} className={`mon-kpi glass-panel mon-kpi-${kpi.color}`}>
+              <div className="mon-kpi-icon">
+                <Icon size={18} />
+              </div>
+              <div className="mon-kpi-body">
+                <span className="mon-kpi-label">{kpi.label}</span>
+                <strong className="mon-kpi-value">{loading ? '—' : kpi.value}</strong>
+                <small className="mon-kpi-sub">{kpi.sub}</small>
+              </div>
+            </article>
+          );
+        })}
       </div>
 
-      <section className="glass-panel" style={{ marginBottom: 18 }}>
-        <div className="settings-section-head"><div><h3>EJB Timer Service</h3><p>Persistent logistics schedules reported by the application server.</p></div></div>
-        <div className="table-wrap"><table><thead><tr><th>Timer</th><th>Next Timeout</th><th>Persistent</th></tr></thead><tbody>{loading ? <tr><td colSpan={3}>Loading timers...</td></tr> : (snapshot?.timers.length ? snapshot.timers.map((timer, index) => <tr key={`${timer.info}-${index}`}><td>{timer.info}</td><td>{timer.nextTimeout ? new Date(timer.nextTimeout).toLocaleString() : '—'}</td><td>{timer.persistent ? 'Yes' : 'No'}</td></tr>) : <tr><td colSpan={3}>No active timers reported.</td></tr>)}</tbody></table></div>
+      {/* ── Supply Alerts banner ──────────────────────────────────── */}
+      {!loading && snapshot && snapshot.alerts.length > 0 && (
+        <div className="mon-alerts-banner glass-panel">
+          <div className="mon-alerts-banner-head">
+            <ShieldAlert size={16} />
+            <strong>Supply Chain Alerts</strong>
+            <span className="mon-alert-count">{snapshot.alerts.length}</span>
+          </div>
+          <div className="mon-alerts-banner-list">
+            {snapshot.alerts.map((alert) => (
+              <div key={alert.id} className={`mon-alert-chip mon-alert-${alert.type}`}>
+                <span className="mon-alert-chip-dot" />
+                <div>
+                  <strong>{alert.title}</strong>
+                  <p>{alert.message}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── EJB Timer Service ─────────────────────────────────────── */}
+      <section className="glass-panel mon-section">
+        <div className="mon-section-head">
+          <div className="mon-section-head-left">
+            <span className="mon-section-icon mon-icon-violet"><Clock3 size={15} /></span>
+            <div>
+              <h3>EJB Timer Service</h3>
+              <p>Persistent logistics schedules reported by the application server.</p>
+            </div>
+          </div>
+          <SearchBox value={timerQ} onChange={setTimerQ} placeholder="Search timers…" />
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Timer Info</th>
+                <th>Next Timeout</th>
+                <th>Persistent</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={3}><div className="mon-loading-row"><div className="mon-spinner" /><span>Loading timers…</span></div></td></tr>
+              ) : filteredTimers.length ? filteredTimers.map((timer, i) => (
+                <tr key={`${timer.info}-${i}`}>
+                  <td><span className="mon-timer-info">{timer.info}</span></td>
+                  <td>{fmtDate(timer.nextTimeout)}</td>
+                  <td>
+                    <span className={`mon-bool-badge ${timer.persistent ? 'mon-bool-yes' : 'mon-bool-no'}`}>
+                      {timer.persistent ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
+                      {timer.persistent ? 'Yes' : 'No'}
+                    </span>
+                  </td>
+                </tr>
+              )) : (
+                <tr><td colSpan={3} className="mon-empty-cell">{timerQ ? `No timers matching "${timerQ}"` : 'No active timers reported.'}</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
 
-      <section className="glass-panel" style={{ marginBottom: 18 }}>
-        <div className="settings-section-head"><div><h3>Interceptor Performance</h3><p>Recent measured business-method executions.</p></div></div>
-        <div className="table-wrap"><table><thead><tr><th>Type</th><th>Operation</th><th>Duration</th><th>Result</th><th>Recorded</th></tr></thead><tbody>{snapshot?.metrics.length ? snapshot.metrics.slice(0, 20).map((metric) => <tr key={metric.id}><td>{metric.type}</td><td>{metric.operation}</td><td>{metric.durationMs} ms</td><td>{metric.success ? 'Success' : 'Failed'}</td><td>{metric.recordedAt ? new Date(metric.recordedAt).toLocaleString() : '—'}</td></tr>) : <tr><td colSpan={5}>No performance measurements recorded yet.</td></tr>}</tbody></table></div>
+      {/* ── Interceptor Performance ───────────────────────────────── */}
+      <section className="glass-panel mon-section">
+        <div className="mon-section-head">
+          <div className="mon-section-head-left">
+            <span className="mon-section-icon mon-icon-blue"><Activity size={15} /></span>
+            <div>
+              <h3>Interceptor Performance</h3>
+              <p>Recent measured business-method executions.</p>
+            </div>
+          </div>
+          <SearchBox value={metricQ} onChange={setMetricQ} placeholder="Filter by type or operation…" />
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Operation</th>
+                <th>Duration</th>
+                <th>Result</th>
+                <th>Recorded</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMetrics.length ? filteredMetrics.slice(0, 30).map((m) => (
+                <tr key={m.id}>
+                  <td><span className="mon-type-tag">{m.type}</span></td>
+                  <td className="mon-operation-cell">{m.operation}</td>
+                  <td>
+                    <span className={`mon-duration ${m.durationMs > 500 ? 'mon-duration-slow' : m.durationMs > 200 ? 'mon-duration-mid' : 'mon-duration-fast'}`}>
+                      {m.durationMs} ms
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`mon-bool-badge ${m.success ? 'mon-bool-yes' : 'mon-bool-no'}`}>
+                      {m.success ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
+                      {m.success ? 'Success' : 'Failed'}
+                    </span>
+                  </td>
+                  <td className="mon-date-cell">{fmtDate(m.recordedAt)}</td>
+                </tr>
+              )) : (
+                <tr><td colSpan={5} className="mon-empty-cell">{metricQ ? `No metrics matching "${metricQ}"` : 'No performance measurements recorded yet.'}</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        {filteredMetrics.length > 30 && (
+          <div className="mon-table-footer">Showing first 30 of {filteredMetrics.length} records.</div>
+        )}
       </section>
 
-      <section className="glass-panel" style={{ marginBottom: 18 }}>
-        <div className="settings-section-head"><div><h3>Audit Trail</h3><p>Cross-cutting logistics actions captured by the audit interceptor.</p></div></div>
-        <div className="table-wrap"><table><thead><tr><th>Action</th><th>Component</th><th>User</th><th>Result</th><th>Time</th></tr></thead><tbody>{snapshot?.audit.length ? snapshot.audit.slice(0, 30).map((entry) => <tr key={entry.id}><td>{entry.action}</td><td>{entry.component}.{entry.method}</td><td>{entry.performedBy || 'SYSTEM'}</td><td>{entry.success ? 'Success' : 'Failed'}</td><td>{entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '—'}</td></tr>) : <tr><td colSpan={5}>No audit activity recorded yet.</td></tr>}</tbody></table></div>
+      {/* ── Audit Trail ───────────────────────────────────────────── */}
+      <section className="glass-panel mon-section">
+        <div className="mon-section-head">
+          <div className="mon-section-head-left">
+            <span className="mon-section-icon mon-icon-emerald"><BookOpen size={15} /></span>
+            <div>
+              <h3>Audit Trail</h3>
+              <p>Cross-cutting logistics actions captured by the audit interceptor.</p>
+            </div>
+          </div>
+          <SearchBox value={auditQ} onChange={setAuditQ} placeholder="Search by action, component or user…" />
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Component</th>
+                <th>User</th>
+                <th>Result</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAudit.length ? filteredAudit.slice(0, 40).map((e) => (
+                <tr key={e.id}>
+                  <td><span className="mon-audit-action">{e.action}</span></td>
+                  <td className="mon-mono">{e.component}<span className="mon-muted">.{e.method}</span></td>
+                  <td>{e.performedBy ?? <span className="mon-system-tag">SYSTEM</span>}</td>
+                  <td>
+                    <span className={`mon-bool-badge ${e.success ? 'mon-bool-yes' : 'mon-bool-no'}`}>
+                      {e.success ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
+                      {e.success ? 'Success' : 'Failed'}
+                    </span>
+                  </td>
+                  <td className="mon-date-cell">{fmtDate(e.timestamp)}</td>
+                </tr>
+              )) : (
+                <tr><td colSpan={5} className="mon-empty-cell">{auditQ ? `No entries matching "${auditQ}"` : 'No audit activity recorded yet.'}</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        {filteredAudit.length > 40 && (
+          <div className="mon-table-footer">Showing first 40 of {filteredAudit.length} records.</div>
+        )}
       </section>
 
-      <section className="glass-panel">
-        <div className="settings-section-head"><div><h3>Route Optimization</h3><p>Calculated priorities for active shipment routes.</p></div></div>
-        <div className="table-wrap"><table><thead><tr><th>Shipment Database ID</th><th>Priority Score</th></tr></thead><tbody>{Object.keys(routes).length ? Object.entries(routes).map(([shipmentId, priority]) => <tr key={shipmentId}><td>{shipmentId}</td><td>{priority}</td></tr>) : <tr><td colSpan={2}>No route priorities available.</td></tr>}</tbody></table></div>
+      {/* ── Route Optimisation ────────────────────────────────────── */}
+      <section className="glass-panel mon-section">
+        <div className="mon-section-head">
+          <div className="mon-section-head-left">
+            <span className="mon-section-icon mon-icon-amber"><Route size={15} /></span>
+            <div>
+              <h3>Route Optimisation</h3>
+              <p>Calculated priorities for active shipment routes.</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <SearchBox value={routeQ} onChange={setRouteQ} placeholder="Search shipment ID…" />
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Shipment Database ID</th>
+                <th>Priority Score</th>
+                <th>Level</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRoutes.length ? filteredRoutes.map(([shipmentId, priority]) => {
+                const level = priority >= 80 ? 'critical' : priority >= 50 ? 'high' : priority >= 25 ? 'medium' : 'low';
+                return (
+                  <tr key={shipmentId}>
+                    <td><span className="mon-mono">#{shipmentId}</span></td>
+                    <td>
+                      <div className="mon-priority-bar-wrap">
+                        <div className="mon-priority-bar">
+                          <div className={`mon-priority-fill mon-priority-${level}`} style={{ width: `${Math.min(priority, 100)}%` }} />
+                        </div>
+                        <span className="mon-priority-val">{priority}</span>
+                      </div>
+                    </td>
+                    <td><span className={`mon-level-badge mon-level-${level}`}>{level.charAt(0).toUpperCase() + level.slice(1)}</span></td>
+                  </tr>
+                );
+              }) : (
+                <tr><td colSpan={3} className="mon-empty-cell">{routeQ ? `No routes matching "${routeQ}"` : 'No route priorities available.'}</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
 
-      {toast && <div className="toast"><CheckCircle2 size={16} /><div><strong>Monitoring</strong><span>{toast}</span></div></div>}
+      {/* ── Toast ─────────────────────────────────────────────────── */}
+      {toast && (
+        <div className={`toast ${toast.ok ? '' : 'toast-error'}`}>
+          {toast.ok ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+          <div>
+            <strong>Monitoring</strong>
+            <span>{toast.msg}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

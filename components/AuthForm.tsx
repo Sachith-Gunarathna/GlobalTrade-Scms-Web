@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   Lock,
   Mail,
@@ -55,21 +55,9 @@ const SRI_LANKA_HUBS = [
   'Trincomalee Deep Water Logistics Bay'
 ];
 
-const ROLES = [
-  'Operations Director / Lead',
-  'Supply Chain Manager',
-  'Port Logistics Dispatcher',
-  'Procurement Specialist',
-  'Customs Clearance Broker',
-  'Fleet & Corridor Supervisor',
-  'Warehouse Operations Officer',
-  'Logistics Data Analyst'
-];
-
 export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get('redirect') || '/';
+  const [redirectUrl, setRedirectUrl] = useState('/');
 
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [loading, setLoading] = useState(false);
@@ -86,12 +74,16 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
   const [phone, setPhone] = useState('');
   const [organization, setOrganization] = useState('GlobalTrade SCMS Partner Ltd');
   const [department, setDepartment] = useState(DEPARTMENTS[0]);
-  const [role, setRole] = useState(ROLES[0]);
   const [hub, setHub] = useState(SRI_LANKA_HUBS[0]);
   const [registerPassword, setRegisterPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(true);
+
+  useEffect(() => {
+    const redirect = new URLSearchParams(window.location.search).get('redirect');
+    setRedirectUrl(redirect || '/');
+  }, []);
 
   const passwordStrength = useMemo(() => {
     const pwd = registerPassword;
@@ -170,7 +162,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
         mobileNumber: phone,
         organizationOrCompany: organization,
         primaryHub: hub,
-        role,
+        role: 'VENDOR_REP',
         department
       });
       setSuccessMessage('Account registered successfully. You can now sign in.');
@@ -322,7 +314,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
                     required
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="alex.grant@globaltrade.lk"
+                    placeholder="admin@globaltrade.lk"
                     className="auth-input"
                     autoComplete="email"
                   />
@@ -482,14 +474,11 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
                   />
                 </div>
                 <div className="auth-input-group">
-                  <label className="auth-label">Operational Role</label>
-                  <CustomSelect
-                    options={ROLES}
-                    value={role}
-                    onChange={(val) => setRole(val)}
-                    icon={<User size={15} />}
-                    searchable
-                  />
+                  <label className="auth-label">Account Role</label>
+                  <div className="auth-input-wrapper">
+                    <ShieldCheck size={16} className="auth-input-icon" />
+                    <input className="auth-input" value="Vendor Representative" readOnly />
+                  </div>
                 </div>
               </div>
 

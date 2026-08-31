@@ -6,7 +6,7 @@
     {"region":"APAC","shipments":184},{"region":"Europe","shipments":142},{"region":"N. America","shipments":128},{"region":"Middle East","shipments":94},{"region":"Oceania","shipments":56}
   ],
   "fulfillment": [
-    {"name":"On time","value":86},{"name":"Late","value":9},{"name":"Open","value":5}
+    {"name":"Delivered","value":68},{"name":"In Transit","value":21},{"name":"Pending","value":7},{"name":"Cancelled","value":4}
   ],
   "topSuppliers": [
     {"name":"Shenzhen Nova Electronics","volume":248},{"name":"Aichi Mobility Systems","volume":221},{"name":"Rheinland Industrial GmbH","volume":198},{"name":"Lanka Technical Textiles","volume":176},{"name":"Emirates Packaging Solutions","volume":143}

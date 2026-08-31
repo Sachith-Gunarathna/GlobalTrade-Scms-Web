@@ -12,14 +12,18 @@ import {
   Tag,
   DollarSign,
   Layers,
-  Sliders
+  Sliders,
+  Minus,
+  Trash2
 } from 'lucide-react';
 import { PageHeader } from './PageHeader';
 import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
 import { CustomSelect } from './CustomSelect';
 import type { InventoryItem, Supplier } from '@/types';
-import { createInventoryItem, getAllInventory, getAllVendors } from '@/app/services/apiService';
+import { createInventoryItem, deleteInventoryItem, getAllInventory, getAllVendors, updateInventoryQuantity } from '@/app/services/apiService';
+import { canAccess } from '@/app/services/roleAccess';
+import { useCurrentUser } from '@/context/AuthContext';
 
 export function InventoryClient({
   inventory: initialInventory,
@@ -34,6 +38,11 @@ export function InventoryClient({
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [vendors, setVendors] = useState<Supplier[]>([]);
+  const user = useCurrentUser();
+  const canCreate = canAccess(user?.role, 'inventory.create');
+  const canAdjust = canAccess(user?.role, 'inventory.adjust');
+  const canDelete = canAccess(user?.role, 'inventory.delete');
+  const [busyId, setBusyId] = useState<number | null>(null);
 
   const [newItem, setNewItem] = useState({
     sku: `ELX-${Math.floor(4000 + Math.random() * 5000)}`,
@@ -70,6 +79,10 @@ export function InventoryClient({
 
   const lowCount = inventoryList.filter((i) => i.stock < i.threshold).length;
   const totalValuation = inventoryList.reduce((acc, i) => acc + i.value, 0);
+  const warehouseCount = new Set(inventoryList.map((item) => item.warehouse).filter(Boolean)).size;
+  const totalCapacity = inventoryList.reduce((sum, item) => sum + Math.max(0, item.capacity), 0);
+  const totalStock = inventoryList.reduce((sum, item) => sum + Math.max(0, item.stock), 0);
+  const capacityUsed = totalCapacity ? Math.min(100, (totalStock / totalCapacity) * 100) : 0;
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -110,12 +123,40 @@ export function InventoryClient({
   };
 
 
+  const adjustQuantity = async (item: InventoryItem, nextQuantity: number) => {
+    if (!item.databaseId || !canAdjust) return;
+    setBusyId(item.databaseId);
+    try {
+      const updated = await updateInventoryQuantity(item.databaseId, Math.max(0, nextQuantity));
+      setInventoryList((current) => current.map((row) => row.databaseId === updated.databaseId ? updated : row));
+      showToast(`${updated.sku} quantity updated to ${updated.stock}.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to update inventory quantity.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const removeItem = async (item: InventoryItem) => {
+    if (!item.databaseId || !canDelete) return;
+    setBusyId(item.databaseId);
+    try {
+      await deleteInventoryItem(item.databaseId);
+      setInventoryList((current) => current.filter((row) => row.databaseId !== item.databaseId));
+      showToast(`${item.sku} removed from inventory.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to delete inventory item.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return <>
     <PageHeader
       eyebrow="Stock intelligence"
       title="Inventory"
       description="Monitor stock positions, warehouse capacity, and replenishment risk in real time."
-      action={
+      action={canCreate ? (
         <button
           type="button"
           className="primary-btn"
@@ -123,14 +164,14 @@ export function InventoryClient({
         >
           <PackagePlus size={17} /> Add item
         </button>
-      }
+      ) : undefined}
     />
 
     <div className="stat-strip glass-panel">
-      <div><span>Total SKUs</span><strong>{inventoryList.length}</strong><small>Across 8 warehouses</small></div>
-      <div><span>Inventory value</span><strong>${(totalValuation / 1000000).toFixed(2)}M</strong><small className="positive-text">+5.6%</small></div>
+      <div><span>Total SKUs</span><strong>{inventoryList.length}</strong><small>Across {warehouseCount} warehouses</small></div>
+      <div><span>Inventory value</span><strong>${(totalValuation / 1000000).toFixed(2)}M</strong><small>Current stock valuation</small></div>
       <div><span>Low stock items</span><strong>{lowCount}</strong><small className={lowCount > 0 ? 'danger-text' : 'positive-text'}>{lowCount > 0 ? 'Needs replenishment' : 'All optimal'}</small></div>
-      <div><span>Capacity used</span><strong>74%</strong><small>Network average</small></div>
+      <div><span>Capacity used</span><strong>{capacityUsed.toFixed(1)}%</strong><small>Across catalogued storage</small></div>
     </div>
 
     <section className="panel glass-panel data-panel">
@@ -163,6 +204,7 @@ export function InventoryClient({
               <th>Warehouse</th>
               <th>Inventory value</th>
               <th>Health</th>
+              {(canAdjust || canDelete) && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -202,6 +244,15 @@ export function InventoryClient({
                       <span className="stock-ok"><i/> Healthy</span>
                     )}
                   </td>
+                  {(canAdjust || canDelete) && (
+                    <td>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {canAdjust && <button type="button" className="ghost-btn" disabled={busyId === item.databaseId} onClick={() => void adjustQuantity(item, item.stock - 1)}><Minus size={13} /></button>}
+                        {canAdjust && <button type="button" className="secondary-btn" disabled={busyId === item.databaseId} onClick={() => void adjustQuantity(item, item.stock + 1)}><Plus size={13} /></button>}
+                        {canDelete && <button type="button" className="ghost-btn danger-text" disabled={busyId === item.databaseId} onClick={() => void removeItem(item)}><Trash2 size={13} /></button>}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               );
             })}

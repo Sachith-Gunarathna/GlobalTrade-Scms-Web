@@ -33,12 +33,10 @@ import {
   Activity
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import shipments from '@/data/shipments.json';
-import orders from '@/data/orders.json';
-import inventory from '@/data/inventory.json';
-import suppliers from '@/data/suppliers.json';
-import { userLogOut, verifySession } from '@/app/services/apiService';
-import type { ApiUser } from '@/types';
+import { getAllInventory, getAllOrders, getAllShipments, getAllVendors, getDashboardData, userLogOut, verifySession } from '@/app/services/apiService';
+import { canAccess, labelForRole } from '@/app/services/roleAccess';
+import { AuthContextProvider } from '@/context/AuthContext';
+import type { ApiUser, DashboardAlert, InventoryItem, Order, Shipment, Supplier } from '@/types';
 
 const nav = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, keywords: 'home overview kpi command center sri lanka routes', roles: ['ADMIN', 'LOGISTICS_COORDINATOR', 'WAREHOUSE_MANAGER', 'CUSTOMS_AGENT', 'VENDOR_REP'] },
@@ -57,12 +55,13 @@ const extraNav = [
   { href: '/settings', label: 'Settings', icon: Building2, keywords: 'settings organization fleet enterprise api team keys backup' }
 ];
 
-const notificationSeed = [
-  { id: 1, icon: TriangleAlert, tone: 'danger', title: 'Shipment SHP-78418 delayed', time: '18 min ago' },
-  { id: 2, icon: Boxes, tone: 'warning', title: '2 inventory items below threshold', time: '42 min ago' },
-  { id: 3, icon: CheckCircle2, tone: 'success', title: 'SHP-78412 delivered in Dubai', time: '1 hr ago' },
-  { id: 4, icon: Info, tone: 'info', title: 'August performance report is ready', time: '2 hrs ago' }
-];
+type NotificationItem = {
+  id: number;
+  icon: typeof Bell;
+  tone: string;
+  title: string;
+  time: string;
+};
 
 type SearchResult = {
   href: string;
@@ -92,10 +91,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [readNotifications, setReadNotifications] = useState<number[]>([]);
+  const [searchShipments, setSearchShipments] = useState<Shipment[]>([]);
+  const [searchOrders, setSearchOrders] = useState<Order[]>([]);
+  const [searchInventory, setSearchInventory] = useState<InventoryItem[]>([]);
+  const [searchSuppliers, setSearchSuppliers] = useState<Supplier[]>([]);
+  const [dashboardAlerts, setDashboardAlerts] = useState<DashboardAlert[]>([]);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const active = allNav.find((item) => (item.href === '/' ? pathname === '/' : pathname.startsWith(item.href))) ?? nav[0];
-  const unreadCount = notificationSeed.filter((n) => !readNotifications.includes(n.id)).length;
+  const restrictedNav = nav.find((item) => item.href !== '/' && pathname.startsWith(item.href));
+  const routeAllowed = !user || (restrictedNav ? restrictedNav.roles.includes(user.role) : pathname.startsWith('/settings') ? canAccess(user.role, 'settings.view') : true);
+  const notificationItems = useMemo<NotificationItem[]>(() => dashboardAlerts.map((alert, index) => {
+    const lower = `${alert.type} ${alert.category}`.toLowerCase();
+    const tone = lower.includes('critical') || lower.includes('delay') || lower.includes('danger') ? 'danger' : lower.includes('stock') || lower.includes('warning') ? 'warning' : 'info';
+    const icon = tone === 'danger' ? TriangleAlert : tone === 'warning' ? Boxes : Info;
+    return { id: index + 1, icon, tone, title: alert.title || alert.message, time: 'Current operational alert' };
+  }), [dashboardAlerts]);
+  const unreadCount = notificationItems.filter((n) => !readNotifications.includes(n.id)).length;
 
   const results = useMemo<SearchResult[]>(() => {
     const q = query.trim().toLowerCase();
@@ -106,24 +118,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       .filter((item) => `${item.label} ${item.keywords}`.toLowerCase().includes(q))
       .map((item) => ({ href: item.href, label: item.label, meta: 'Workspace module', icon: item.icon }));
 
-    const shipmentResults = shipments
+    const shipmentResults = searchShipments
       .filter((item) => `${item.id} ${item.origin} ${item.destination} ${item.carrier} ${item.vessel}`.toLowerCase().includes(q))
       .map((item) => ({ href: `/shipments?q=${encodeURIComponent(item.id)}`, label: item.id, meta: `${item.origin} → ${item.destination}`, icon: Truck }));
 
-    const orderResults = orders
+    const orderResults = searchOrders
       .filter((item) => `${item.id} ${item.customer} ${item.region}`.toLowerCase().includes(q))
       .map((item) => ({ href: `/orders?q=${encodeURIComponent(item.id)}`, label: item.id, meta: item.customer, icon: ShoppingCart }));
 
-    const inventoryResults = inventory
+    const inventoryResults = searchInventory
       .filter((item) => `${item.sku} ${item.name} ${item.category} ${item.warehouse}`.toLowerCase().includes(q))
       .map((item) => ({ href: `/inventory?q=${encodeURIComponent(item.sku)}`, label: item.sku, meta: item.name, icon: PackageSearch }));
 
-    const supplierResults = suppliers
+    const supplierResults = searchSuppliers
       .filter((item) => `${item.name} ${item.country} ${item.region} ${item.category}`.toLowerCase().includes(q))
       .map((item) => ({ href: `/suppliers?q=${encodeURIComponent(item.name)}`, label: item.name, meta: `${item.country} · ${item.category}`, icon: UsersRound }));
 
     return [...moduleResults, ...shipmentResults, ...orderResults, ...inventoryResults, ...supplierResults].slice(0, 8);
-  }, [query, user?.role]);
+  }, [query, user?.role, searchShipments, searchOrders, searchInventory, searchSuppliers]);
 
   useEffect(() => {
     let activeRequest = true;
@@ -138,6 +150,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           setUser(result.user);
           localStorage.setItem('scms_user', JSON.stringify(result.user));
           setAuthChecked(true);
+
+          const role = result.user.role;
+          void Promise.all([
+            canAccess(role, 'shipments.view') ? getAllShipments().catch(() => []) : Promise.resolve([] as Shipment[]),
+            canAccess(role, 'orders.view') ? getAllOrders().catch(() => []) : Promise.resolve([] as Order[]),
+            canAccess(role, 'inventory.view') ? getAllInventory().catch(() => []) : Promise.resolve([] as InventoryItem[]),
+            canAccess(role, 'suppliers.view') ? getAllVendors().catch(() => []) : Promise.resolve([] as Supplier[])
+          ]).then(([shipmentRows, orderRows, inventoryRows, supplierRows]) => {
+            if (!activeRequest) return;
+            setSearchShipments(shipmentRows);
+            setSearchOrders(orderRows);
+            setSearchInventory(inventoryRows);
+            setSearchSuppliers(supplierRows);
+          });
+
+          void getDashboardData().then((dashboard) => {
+            if (activeRequest) setDashboardAlerts(dashboard.alerts ?? []);
+          }).catch(() => {
+            if (activeRequest) setDashboardAlerts([]);
+          });
         })
         .catch(() => {
           if (!activeRequest) return;
@@ -169,6 +201,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       window.removeEventListener('keydown', handler);
     };
   }, [isAuthRoute, router]);
+
+  useEffect(() => {
+    if (authChecked && user && !routeAllowed) {
+      router.replace('/');
+    }
+  }, [authChecked, user, routeAllowed, router]);
 
   const handleLogOut = async () => {
     try {
@@ -205,12 +243,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  if (!authChecked || !user) {
+  if (!authChecked || !user || !routeAllowed) {
     return <div className="app-loading" aria-label="Checking session" />;
   }
 
   return (
-    <div className={`app-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
+    <AuthContextProvider value={user}>
+      <div className={`app-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <aside className={`sidebar glass ${mobileOpen ? 'mobile-open' : ''}`}>
         <div className="brand-row">
           <Link href="/" className="brand" onClick={() => setMobileOpen(false)}>
@@ -235,7 +274,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
 
           <p className="nav-caption" style={{ marginTop: '14px' }}>System</p>
-          {extraNav.map((item) => {
+          {extraNav.filter((item) => item.href !== '/settings' || canAccess(user.role, 'settings.view')).map((item) => {
             const Icon = item.icon;
             const selected = pathname.startsWith(item.href);
             return (
@@ -256,10 +295,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span><i /> Sri Lanka Hubs Live</span>
             </div>
           </div>
-          <Link href="/settings" onClick={() => setMobileOpen(false)} className={`nav-item muted sidebar-action ${pathname.startsWith('/settings') ? 'active' : ''}`}>
-            <Settings size={20} />
-            <span>Settings</span>
-          </Link>
+          {canAccess(user.role, 'settings.view') && (
+            <Link href="/settings" onClick={() => setMobileOpen(false)} className={`nav-item muted sidebar-action ${pathname.startsWith('/settings') ? 'active' : ''}`}>
+              <Settings size={20} />
+              <span>Settings</span>
+            </Link>
+          )}
           <button className="collapse-btn" onClick={toggleCollapsed} type="button">
             {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
             <span>{collapsed ? 'Expand' : 'Collapse sidebar'}</span>
@@ -305,10 +346,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="dropdown-panel notification-panel glass">
                   <div className="dropdown-head">
                     <div><strong>Notifications</strong><span>{unreadCount ? `${unreadCount} unread updates` : 'You are all caught up'}</span></div>
-                    <button onClick={() => setReadNotifications(notificationSeed.map((n) => n.id))} disabled={!unreadCount}>Mark all read</button>
+                    <button onClick={() => setReadNotifications(notificationItems.map((n) => n.id))} disabled={!unreadCount}>Mark all read</button>
                   </div>
                   <div className="notification-list">
-                    {notificationSeed.map((n) => {
+                    {notificationItems.length ? notificationItems.map((n) => {
                       const Icon = n.icon;
                       const isRead = readNotifications.includes(n.id);
                       return (
@@ -317,7 +358,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           <span><strong>{n.title}</strong><small>{n.time}</small></span>
                         </button>
                       );
-                    })}
+                    }) : <div className="search-empty">No active operational alerts.</div>}
                   </div>
                   <Link href="/preferences" className="dropdown-footer" onClick={() => setNotifOpen(false)}>Notification preferences <ChevronRight size={15} /></Link>
                 </div>
@@ -327,15 +368,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="dropdown-wrap profile-wrap">
               <button className="profile-button" onClick={() => { setProfileOpen((v) => !v); setNotifOpen(false); }}>
                 <span className="avatar">{`${user.firstName?.[0] || 'U'}${user.lastName?.[0] || 'G'}`}</span>
-                <span className="profile-meta"><strong>{user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Alex Grant'}</strong><small>{user?.role?.split('&')[0] || user?.title || 'Operations Director'}</small></span>
+                <span className="profile-meta"><strong>{`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'SCMS User'}</strong><small>{labelForRole(user.role)}</small></span>
                 <ChevronDown size={15} />
               </button>
               {profileOpen && (
                 <div className="dropdown-panel profile-panel glass">
                   <div style={{ padding: '8px 12px 10px', borderBottom: '1px solid var(--line)', marginBottom: '6px' }}>
-                    <strong style={{ display: 'block', fontSize: '12px', color: '#f1f5f9' }}>{user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Alex Grant'}</strong>
-                    <small style={{ display: 'block', fontSize: '10px', color: '#7b8fa7', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email || 'alex.grant@globaltrade.lk'}</small>
-                    <small style={{ display: 'block', fontSize: '9px', color: '#10b981', marginTop: '2px', fontWeight: 600 }}>{user?.hub || 'Colombo HQ'}</small>
+                    <strong style={{ display: 'block', fontSize: '12px', color: '#f1f5f9' }}>{`${user.firstName || ''} ${user.lastName || ''}`.trim() || 'SCMS User'}</strong>
+                    <small style={{ display: 'block', fontSize: '10px', color: '#7b8fa7', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</small>
+                    <small style={{ display: 'block', fontSize: '9px', color: '#10b981', marginTop: '2px', fontWeight: 600 }}>{user.primaryHub || user.hub || 'No hub assigned'}</small>
                   </div>
                   <Link href="/account" className="dropdown-nav-btn" onClick={() => setProfileOpen(false)}>
                     <CircleUserRound size={17} /> My account
@@ -343,9 +384,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <Link href="/preferences" className="dropdown-nav-btn" onClick={() => setProfileOpen(false)}>
                     <Sliders size={17} /> Preferences
                   </Link>
-                  <Link href="/settings" className="dropdown-nav-btn" onClick={() => setProfileOpen(false)}>
-                    <Building2 size={17} /> System Settings
-                  </Link>
+                  {canAccess(user.role, 'settings.view') && (
+                    <Link href="/settings" className="dropdown-nav-btn" onClick={() => setProfileOpen(false)}>
+                      <Building2 size={17} /> System Settings
+                    </Link>
+                  )}
                   <div className="dropdown-sep" />
                   <button
                     type="button"
@@ -364,7 +407,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main className="content">{children}</main>
+        </div>
       </div>
-    </div>
+    </AuthContextProvider>
   );
 }

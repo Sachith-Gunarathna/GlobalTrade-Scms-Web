@@ -188,7 +188,7 @@ export function AccountClient() {
 
       {activeTab === 'permissions' && (
         <div className="settings-panel glass-panel">
-          <div className="settings-section-head"><div><h3>Role-Based Authorization</h3><p>Server-side EJB and REST authorization uses the role attached to the authenticated account.</p></div></div>
+          <div className="settings-section-head"><div><h3>Role-Based Authorization</h3><p>Server-side authorization uses the role attached to the authenticated account for each protected REST operation.</p></div></div>
           <div className="permissions-grid">
             <div className="perm-card granted"><div className="perm-top"><CheckCircle2 size={18} className="perm-ok" /><strong>Current Role</strong></div><p>{user?.role || 'No role loaded'}</p></div>
             <div className="perm-card granted"><div className="perm-top"><CheckCircle2 size={18} className="perm-ok" /><strong>Authenticated Identity</strong></div><p>{user?.email || 'Session identity has not been loaded.'}</p></div>

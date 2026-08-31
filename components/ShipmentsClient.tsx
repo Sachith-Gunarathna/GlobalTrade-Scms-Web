@@ -22,7 +22,8 @@ import {
   ArrowRight,
   Anchor,
   Sparkles,
-  DollarSign
+  DollarSign,
+  Trash2
 } from 'lucide-react';
 import { PageHeader } from './PageHeader';
 import { StatusBadge } from './StatusBadge';
@@ -30,7 +31,9 @@ import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
 import { CustomSelect } from './CustomSelect';
 import type { Shipment, ShipmentStatus, Supplier } from '@/types';
-import { createShipment, getAllShipments, getAllVendors } from '@/app/services/apiService';
+import { createShipment, deleteShipment, getAllShipments, getAllVendors, updateShipmentStatus } from '@/app/services/apiService';
+import { canAccess } from '@/app/services/roleAccess';
+import { useCurrentUser } from '@/context/AuthContext';
 
 const statuses = ['All', 'In Transit', 'Delayed', 'Delivered', 'Pending', 'Customs Hold', 'Cancelled'];
 
@@ -105,6 +108,11 @@ export function ShipmentsClient({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [vendors, setVendors] = useState<Supplier[]>([]);
+  const [busyAction, setBusyAction] = useState(false);
+  const user = useCurrentUser();
+  const canCreate = canAccess(user?.role, 'shipments.create');
+  const canChangeStatus = canAccess(user?.role, 'shipments.status');
+  const canDelete = canAccess(user?.role, 'shipments.delete');
 
   useEffect(() => {
     let active = true;
@@ -136,8 +144,8 @@ export function ShipmentsClient({
     vendorId: 0,
   });
 
-  const origins = ['All origins', ...Array.from(new Set(shipmentsList.map((s) => s.origin)))];
-  const destinations = ['All destinations', ...Array.from(new Set(shipmentsList.map((s) => s.destination)))];
+  const origins: string[] = ['All origins', ...Array.from(new Set(shipmentsList.map((s) => s.origin)))];
+  const destinations: string[] = ['All destinations', ...Array.from(new Set(shipmentsList.map((s) => s.destination)))];
 
   const filtered = useMemo(() => shipmentsList.filter((s) => {
     const q = query.toLowerCase();
@@ -189,12 +197,43 @@ export function ShipmentsClient({
   };
 
 
+  const changeSelectedStatus = async (nextStatus: ShipmentStatus) => {
+    if (!selected?.databaseId || !canChangeStatus) return;
+    setBusyAction(true);
+    try {
+      const updated = await updateShipmentStatus(selected.databaseId, nextStatus);
+      setShipmentsList((current) => current.map((item) => item.databaseId === updated.databaseId ? updated : item));
+      setSelected(updated);
+      showToast(`Shipment ${updated.id} status updated to ${updated.status}.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to update shipment status.');
+    } finally {
+      setBusyAction(false);
+    }
+  };
+
+  const removeSelectedShipment = async () => {
+    if (!selected?.databaseId || !canDelete) return;
+    setBusyAction(true);
+    try {
+      await deleteShipment(selected.databaseId);
+      const removedId = selected.databaseId;
+      setShipmentsList((current) => current.filter((item) => item.databaseId !== removedId));
+      setSelected(null);
+      showToast('Shipment deleted successfully.');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to delete shipment.');
+    } finally {
+      setBusyAction(false);
+    }
+  };
+
   return <>
     <PageHeader
       eyebrow="Global Freight Operations"
       title="Shipments & Freight Lanes"
       description="Real-time multi-modal logistics tracking, port clearance status, carrier performance, and lane timelines."
-      action={
+      action={canCreate ? (
         <button
           type="button"
           className="primary-btn"
@@ -202,7 +241,7 @@ export function ShipmentsClient({
         >
           <Plus size={16} /> Create shipment
         </button>
-      }
+      ) : undefined}
     />
 
     <section className="kpi-grid">
@@ -436,6 +475,13 @@ export function ShipmentsClient({
           <span className={selected.progress >= 95 ? 'done' : ''}><i /> Destination Arrival</span>
         </div>
       </div>
+      {(canChangeStatus || canDelete) && selected.databaseId && (
+        <div className="form-footer">
+          {canChangeStatus && <button type="button" className="secondary-btn" disabled={busyAction} onClick={() => void changeSelectedStatus('Delayed')}>Mark Delayed</button>}
+          {canChangeStatus && <button type="button" className="primary-btn" disabled={busyAction} onClick={() => void changeSelectedStatus('Delivered')}>Mark Delivered</button>}
+          {canDelete && <button type="button" className="ghost-btn danger-text" disabled={busyAction} onClick={() => void removeSelectedShipment()}><Trash2 size={14} /> Delete</button>}
+        </div>
+      )}
     </Modal>}
 
 

@@ -1,17 +1,21 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId } from 'react';
 
 export function Modal({ title, subtitle, onClose, children }: { title: string; subtitle?: string; onClose: () => void; children: React.ReactNode }) {
   const titleId = useId();
-  const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      // Only close on Escape if the active element is NOT an input/textarea/select
+      const tag = (e.target as HTMLElement).tagName;
+      if (e.key === 'Escape' && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+        onClose();
+      }
+    };
     window.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
-    closeRef.current?.focus();
     return () => {
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
@@ -19,11 +23,17 @@ export function Modal({ title, subtitle, onClose, children }: { title: string; s
   }, [onClose]);
 
   return (
-    <div className="modal-backdrop" onMouseDown={onClose}>
-      <div className="modal glass" role="dialog" aria-modal="true" aria-labelledby={titleId} onMouseDown={(e) => e.stopPropagation()}>
+    <div
+      className="modal-backdrop"
+      onClick={(e) => {
+        // Close only when clicking the backdrop itself, not modal content
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="modal glass" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <div className="modal-head">
           <div><h2 id={titleId}>{title}</h2>{subtitle ? <p>{subtitle}</p> : null}</div>
-          <button ref={closeRef} className="icon-btn" onClick={onClose} aria-label="Close dialog" type="button"><X size={19} /></button>
+          <button className="icon-btn" onClick={onClose} aria-label="Close dialog" type="button"><X size={19} /></button>
         </div>
         <div className="modal-body">{children}</div>
       </div>

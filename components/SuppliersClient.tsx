@@ -14,14 +14,18 @@ import {
   Building,
   Globe2,
   Tag,
-  Award
+  Award,
+  Trash2,
+  Gauge
 } from 'lucide-react';
 import { PageHeader } from './PageHeader';
 import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
 import { CustomSelect } from './CustomSelect';
 import type { Supplier } from '@/types';
-import { createVendor, getAllVendors } from '@/app/services/apiService';
+import { createVendor, deleteVendor, getAllVendors, updateVendorScore } from '@/app/services/apiService';
+import { canAccess } from '@/app/services/roleAccess';
+import { useCurrentUser } from '@/context/AuthContext';
 
 const flags: Record<string, string> = {
   'Sri Lanka': '🇱🇰',
@@ -47,6 +51,13 @@ export function SuppliersClient({
   const [region, setRegion] = useState('All regions');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const user = useCurrentUser();
+  const canCreate = canAccess(user?.role, 'suppliers.create');
+  const canScore = canAccess(user?.role, 'suppliers.score');
+  const canDelete = canAccess(user?.role, 'suppliers.delete');
+  const [scoreTarget, setScoreTarget] = useState<Supplier | null>(null);
+  const [scoreValue, setScoreValue] = useState(90);
+  const [busySupplierId, setBusySupplierId] = useState<number | null>(null);
 
   const [newSupplier, setNewSupplier] = useState({
     id: `SUP-${Math.floor(100 + Math.random() * 900)}`,
@@ -69,7 +80,7 @@ export function SuppliersClient({
     return () => { active = false; };
   }, []);
 
-  const regions = ['All regions', ...Array.from(new Set(suppliersList.map((s) => s.region)))];
+  const regions: string[] = ['All regions', ...Array.from(new Set(suppliersList.map((s) => s.region)))];
 
   const filtered = useMemo(() => suppliersList.filter((s) => {
     const q = query.toLowerCase();
@@ -79,6 +90,7 @@ export function SuppliersClient({
   const avgRating = (suppliersList.length ? suppliersList.reduce((sum, s) => sum + s.rating, 0) / suppliersList.length : 0).toFixed(1);
   const totalActiveOrders = suppliersList.reduce((sum, s) => sum + s.activeOrders, 0);
   const avgOnTime = (suppliersList.length ? suppliersList.reduce((sum, s) => sum + s.onTimeRate, 0) / suppliersList.length : 0).toFixed(1);
+  const countryCount = new Set(suppliersList.map((supplier) => supplier.country).filter(Boolean)).size;
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -121,12 +133,49 @@ export function SuppliersClient({
   };
 
 
+  const openScore = (supplier: Supplier) => {
+    setScoreTarget(supplier);
+    setScoreValue(Math.round(supplier.performanceScore ?? supplier.rating * 20));
+  };
+
+  const saveScore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!scoreTarget?.databaseId || !canScore) return;
+    setBusySupplierId(scoreTarget.databaseId);
+    try {
+      const updated = await updateVendorScore(scoreTarget.databaseId, scoreValue);
+      setSuppliersList((current) => current.map((supplier) => supplier.databaseId === updated.databaseId ? updated : supplier));
+      setScoreTarget(null);
+      showToast(`Performance score updated for ${updated.name}.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to update supplier score.');
+    } finally {
+      setBusySupplierId(null);
+    }
+  };
+
+  const removeSupplier = async (supplier: Supplier) => {
+    if (!supplier.databaseId || !canDelete) return;
+    if (!window.confirm(`Delete ${supplier.name}? This is only allowed when no active logistics records depend on the supplier.`)) return;
+    setBusySupplierId(supplier.databaseId);
+    try {
+      await deleteVendor(supplier.databaseId);
+      setSuppliersList((current) => current.filter((item) => item.databaseId !== supplier.databaseId));
+      showToast(`${supplier.name} removed from the supplier network.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to delete supplier.');
+    } finally {
+      setBusySupplierId(null);
+    }
+  };
+
+
   return <>
     <PageHeader
       eyebrow="Partner network"
       title="Suppliers"
       description="Evaluate supplier performance, contacts, active orders, and sourcing coverage."
-      action={
+      action={canCreate ? (
         <button
           type="button"
           className="primary-btn"
@@ -134,14 +183,14 @@ export function SuppliersClient({
         >
           <Plus size={17} /> Add supplier
         </button>
-      }
+      ) : undefined}
     />
 
     <div className="stat-strip glass-panel">
-      <div><span>Active suppliers</span><strong>{suppliersList.length}</strong><small>Across 28 countries</small></div>
-      <div><span>Avg. rating</span><strong>{avgRating}</strong><small className="positive-text">Top tier partner network</small></div>
-      <div><span>Open supplier orders</span><strong>{totalActiveOrders}</strong><small>$892K committed</small></div>
-      <div><span>On-time average</span><strong>{avgOnTime}%</strong><small className="positive-text">+2.1%</small></div>
+      <div><span>Active suppliers</span><strong>{suppliersList.length}</strong><small>Across {countryCount} countries</small></div>
+      <div><span>Avg. rating</span><strong>{avgRating}</strong><small>Current supplier average</small></div>
+      <div><span>Open supplier orders</span><strong>{totalActiveOrders}</strong><small>Reported active orders</small></div>
+      <div><span>On-time average</span><strong>{avgOnTime}%</strong><small>Current SLA average</small></div>
     </div>
 
     <section className="supplier-tools">
@@ -193,12 +242,33 @@ export function SuppliersClient({
               <a href={`mailto:${s.email}`} className="icon-link"><Mail size={12}/>{s.email}</a>
               <a href={`tel:${s.phone}`} className="icon-link"><Phone size={12}/>{s.phone}</a>
             </div>
+            {(canScore || canDelete) && (
+              <div className="supplier-footer" style={{ marginTop: 10, justifyContent: 'flex-end', gap: 8 }}>
+                {canScore && <button type="button" className="secondary-btn" disabled={busySupplierId === s.databaseId} onClick={() => openScore(s)}><Gauge size={14}/> Performance score</button>}
+                {canDelete && <button type="button" className="ghost-btn danger-text" disabled={busySupplierId === s.databaseId} onClick={() => void removeSupplier(s)}><Trash2 size={14}/> Delete</button>}
+              </div>
+            )}
           </article>
         ))}
       </section>
     ) : <EmptyState title="No suppliers match filter"/>}
 
     
+    {scoreTarget && canScore && (
+      <Modal title="Supplier Performance Score" subtitle={scoreTarget.name} onClose={() => setScoreTarget(null)}>
+        <form onSubmit={saveScore} className="modal-form-wrap">
+          <div className="form-group">
+            <label><Gauge size={13} /> Performance Score (0 - 100)</label>
+            <input type="number" min="0" max="100" step="0.1" value={scoreValue} onChange={(e) => setScoreValue(Number(e.target.value))} required />
+          </div>
+          <div className="form-footer">
+            <button type="button" className="ghost-btn" onClick={() => setScoreTarget(null)}>Cancel</button>
+            <button type="submit" className="primary-btn" disabled={busySupplierId === scoreTarget.databaseId}>Save Score</button>
+          </div>
+        </form>
+      </Modal>
+    )}
+
     {isAddOpen && (
       <Modal
         title="Add New Vendor / Supplier"

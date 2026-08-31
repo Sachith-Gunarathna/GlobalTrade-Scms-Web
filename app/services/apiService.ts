@@ -1,4 +1,5 @@
 import type {
+  AnalyticsResponse,
   ApiUser,
   CustomsDocument,
   DashboardResponse,
@@ -9,7 +10,29 @@ import type {
   Supplier
 } from '@/types';
 
-export const BASE_URL = process.env.NEXT_PUBLIC_SCMS_API_URL ?? 'http://localhost:8080/Global-Trade-Scms/v1';
+function resolveBaseUrl() {
+  const configured = process.env.NEXT_PUBLIC_SCMS_API_URL;
+  if (typeof window === 'undefined') {
+    return configured ?? 'http://localhost:8080/Global-Trade-Scms/v1';
+  }
+  const browserHost = window.location.hostname;
+  const fallback = `http://${browserHost}:8080/Global-Trade-Scms/v1`;
+  if (!configured) return fallback;
+  try {
+    const url = new URL(configured);
+    const localConfigured = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    const localBrowser = browserHost === 'localhost' || browserHost === '127.0.0.1';
+    if (localConfigured && localBrowser) {
+      url.hostname = browserHost;
+      return url.toString().replace(/\/$/, '');
+    }
+    return configured.replace(/\/$/, '');
+  } catch {
+    return fallback;
+  }
+}
+
+export const BASE_URL = resolveBaseUrl();
 
 const jsonHeaders = {
   'Content-Type': 'application/json',
@@ -91,6 +114,10 @@ export async function changePassword(currentPassword: string, newPassword: strin
 
 export async function getDashboardData() {
   return request<DashboardResponse>('/dashboard');
+}
+
+export async function getAnalyticsData() {
+  return request<AnalyticsResponse>('/analytics');
 }
 
 export async function getAllShipments() {

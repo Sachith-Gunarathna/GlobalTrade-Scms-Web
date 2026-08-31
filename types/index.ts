@@ -192,3 +192,10 @@ export type MonitoringSnapshot = {
   alerts: SupplyAlert[];
   timers: TimerSnapshot[];
 };
+
+export type AnalyticsResponse = {
+  revenue: { month: string; revenue: number; target: number }[];
+  regions: { region: string; shipments: number }[];
+  fulfillment: { name: string; value: number }[];
+  topSuppliers: { name: string; volume: number }[];
+};

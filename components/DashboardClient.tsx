@@ -5,6 +5,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -217,23 +218,29 @@ export function DashboardClient() {
 
 
   const shipmentStatusData = [
-    {
-      name: 'Pending',
-      count: data.shipmentStatus.pending
-    },
-    {
-      name: 'In Transit',
-      count: data.shipmentStatus.inTransit
-    },
-    {
-      name: 'Delayed',
-      count: data.shipmentStatus.delayed
-    },
-    {
-      name: 'Delivered',
-      count: data.shipmentStatus.delivered
-    }
+    { name: 'Pending',    count: data.shipmentStatus.pending,   color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  glow: 'rgba(245,158,11,0.35)' },
+    { name: 'In Transit', count: data.shipmentStatus.inTransit, color: '#38bdf8', bg: 'rgba(56,189,248,0.12)',  glow: 'rgba(56,189,248,0.35)'  },
+    { name: 'Delayed',    count: data.shipmentStatus.delayed,   color: '#f87171', bg: 'rgba(239,68,68,0.12)',   glow: 'rgba(239,68,68,0.35)'   },
+    { name: 'Delivered',  count: data.shipmentStatus.delivered, color: '#34d399', bg: 'rgba(16,185,129,0.12)', glow: 'rgba(16,185,129,0.35)'  },
   ];
+
+  const totalShipmentCount = shipmentStatusData.reduce((s, d) => s + d.count, 0) || 1;
+
+  const ShipmentBarTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: typeof shipmentStatusData[0]; value: number }[] }) => {
+    if (!active || !payload?.length) return null;
+    const d = payload[0].payload;
+    const pct = Math.round((d.count / totalShipmentCount) * 100);
+    return (
+      <div style={{ background: '#0d1a30', border: `1px solid ${d.color}44`, borderRadius: 12, padding: '10px 14px', minWidth: 130 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, boxShadow: `0 0 8px ${d.color}`, display: 'inline-block' }} />
+          <span style={{ fontSize: 10, fontWeight: 700, color: d.color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{d.name}</span>
+        </div>
+        <div style={{ fontSize: 22, fontWeight: 730, color: '#f0f7ff', letterSpacing: '-0.6px' }}>{d.count.toLocaleString()}</div>
+        <div style={{ fontSize: 9, color: '#5d7998', marginTop: 2 }}>{pct}% of total fleet</div>
+      </div>
+    );
+  };
 
 
   const currentDate = new Date().toLocaleDateString(
@@ -334,85 +341,68 @@ export function DashboardClient() {
 
         
 
-        <article
-          className="panel chart-panel glass-panel span-2"
-        >
+        <article className="panel chart-panel glass-panel span-2">
 
           <div className="panel-head">
-
             <div>
-
-              <span className="section-label">
-                Shipment monitoring
-              </span>
-
-              <h2>
-                Shipment status overview
-              </h2>
-
+              <span className="section-label">Shipment monitoring</span>
+              <h2>Shipment status overview</h2>
             </div>
-
+            {/* colour legend */}
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+              {shipmentStatusData.map((d) => (
+                <span key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#7a90aa', fontWeight: 600 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, boxShadow: `0 0 8px ${d.color}`, display: 'inline-block', flexShrink: 0 }} />
+                  {d.name}
+                  <strong style={{ color: d.color, fontWeight: 730 }}>{d.count}</strong>
+                </span>
+              ))}
+            </div>
           </div>
 
-
           <div className="main-chart">
-
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-            >
-
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={shipmentStatusData}
-                margin={{
-                  top: 12,
-                  right: 8,
-                  left: -24,
-                  bottom: 0
-                }}
+                margin={{ top: 14, right: 8, left: -20, bottom: 0 }}
+                barCategoryGap="32%"
               >
+                <defs>
+                  {shipmentStatusData.map((d) => (
+                    <linearGradient key={d.name} id={`grad-${d.name.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={d.color} stopOpacity={0.9} />
+                      <stop offset="100%" stopColor={d.color} stopOpacity={0.35} />
+                    </linearGradient>
+                  ))}
+                </defs>
 
-                <CartesianGrid
-                  stroke="rgba(148,163,184,.08)"
-                  vertical={false}
-                />
+                <CartesianGrid stroke="rgba(148,163,184,.06)" vertical={false} />
 
                 <XAxis
                   dataKey="name"
-                  stroke="#64748b"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }}
                 />
 
                 <YAxis
                   allowDecimals={false}
-                  stroke="#64748b"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 10, fill: '#4a5e78' }}
+                  width={32}
                 />
 
-                <Tooltip
-                  contentStyle={{
-                    background: '#111a2d',
-                    border:
-                      '1px solid rgba(148,163,184,.14)',
-                    borderRadius: 12,
-                    color: '#e5eefc'
-                  }}
-                />
+                <Tooltip content={<ShipmentBarTooltip />} cursor={{ fill: 'rgba(148,163,184,0.05)', radius: 8 }} />
 
-                <Bar
-                  dataKey="count"
-                  fill="#3b82f6"
-                  radius={[6, 6, 0, 0]}
-                />
+                <Bar dataKey="count" radius={[8, 8, 0, 0]} maxBarSize={64}>
+                  {shipmentStatusData.map((d) => (
+                    <Cell key={d.name} fill={`url(#grad-${d.name.replace(/\s/g, '')})`} />
+                  ))}
+                </Bar>
 
               </BarChart>
-
             </ResponsiveContainer>
-
           </div>
 
         </article>

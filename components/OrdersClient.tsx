@@ -22,7 +22,9 @@ import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
 import { CustomSelect } from './CustomSelect';
 import type { Order, OrderStatus, Supplier } from '@/types';
-import { createOrder, getAllOrders, getAllVendors } from '@/app/services/apiService';
+import { createOrder, getAllOrders, getAllVendors, updateOrderStatus } from '@/app/services/apiService';
+import { canAccess } from '@/app/services/roleAccess';
+import { useCurrentUser } from '@/context/AuthContext';
 
 const statuses = ['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
@@ -40,6 +42,10 @@ export function OrdersClient({
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [vendors, setVendors] = useState<Supplier[]>([]);
+  const [busyAction, setBusyAction] = useState(false);
+  const user = useCurrentUser();
+  const canCreate = canAccess(user?.role, 'orders.create');
+  const canChangeStatus = canAccess(user?.role, 'orders.status');
 
   const [newOrder, setNewOrder] = useState({
     id: `ORD-${Math.floor(9280 + Math.random() * 800)}`,
@@ -73,6 +79,9 @@ export function OrdersClient({
   }), [ordersList, status, query]);
 
   const total = filtered.reduce((sum, o) => sum + o.total, 0);
+  const openOrders = ordersList.filter((o) => o.status === 'Processing' || o.status === 'Pending').length;
+  const deliveredOrders = ordersList.filter((o) => o.status === 'Delivered').length;
+  const fulfillmentRate = ordersList.length ? (deliveredOrders / ordersList.length) * 100 : 0;
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -113,12 +122,27 @@ export function OrdersClient({
   };
 
 
+  const changeOrderStatus = async (nextStatus: OrderStatus) => {
+    if (!selected?.databaseId || !canChangeStatus) return;
+    setBusyAction(true);
+    try {
+      const updated = await updateOrderStatus(selected.databaseId, nextStatus);
+      setOrdersList((current) => current.map((item) => item.databaseId === updated.databaseId ? updated : item));
+      setSelected(updated);
+      showToast(`Order ${updated.id} status updated to ${updated.status}.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to update order status.');
+    } finally {
+      setBusyAction(false);
+    }
+  };
+
   return <>
     <PageHeader
       eyebrow="Commercial operations"
       title="Orders"
       description="Manage customer orders from intake through fulfillment and delivery."
-      action={
+      action={canCreate ? (
         <button
           type="button"
           className="primary-btn"
@@ -126,14 +150,14 @@ export function OrdersClient({
         >
           <Plus size={17} /> Add order
         </button>
-      }
+      ) : undefined}
     />
 
     <div className="stat-strip glass-panel">
-      <div><span>Open orders</span><strong>{ordersList.filter(o => o.status === 'Processing' || o.status === 'Pending').length}</strong><small>12 processing now</small></div>
-      <div><span>Total Order value</span><strong>${(ordersList.reduce((s, o) => s + o.total, 0) / 1000000).toFixed(2)}M</strong><small className="positive-text">+9.2% MoM</small></div>
-      <div><span>Avg. order value</span><strong>${Math.round(ordersList.length ? ordersList.reduce((s, o) => s + o.total, 0) / ordersList.length : 0).toLocaleString()}</strong><small>Last 30 days</small></div>
-      <div><span>Fulfillment</span><strong>96.4%</strong><small className="positive-text">Above target</small></div>
+      <div><span>Open orders</span><strong>{openOrders}</strong><small>Pending and processing</small></div>
+      <div><span>Total Order value</span><strong>${(ordersList.reduce((s, o) => s + o.total, 0) / 1000000).toFixed(2)}M</strong><small>Current database total</small></div>
+      <div><span>Avg. order value</span><strong>${Math.round(ordersList.length ? ordersList.reduce((s, o) => s + o.total, 0) / ordersList.length : 0).toLocaleString()}</strong><small>Across current orders</small></div>
+      <div><span>Fulfillment</span><strong>{fulfillmentRate.toFixed(1)}%</strong><small>{deliveredOrders} delivered orders</small></div>
     </div>
 
     <section className="panel glass-panel data-panel">
@@ -212,8 +236,15 @@ export function OrdersClient({
       </div>
       <div className="info-callout">
         <strong>Fulfillment note</strong>
-        <p>Order is assigned to priority domestic dispatch route through Colombo Logistics Center.</p>
+        <p>Current status is {selected.status}. {selected.vendorName ? `Assigned supplier: ${selected.vendorName}.` : 'No supplier is assigned to this order.'}</p>
       </div>
+      {canChangeStatus && selected.databaseId && (
+        <div className="form-footer">
+          <button type="button" className="secondary-btn" disabled={busyAction} onClick={() => void changeOrderStatus('Processing')}>Mark Processing</button>
+          <button type="button" className="secondary-btn" disabled={busyAction} onClick={() => void changeOrderStatus('Shipped')}>Mark Shipped</button>
+          <button type="button" className="primary-btn" disabled={busyAction} onClick={() => void changeOrderStatus('Delivered')}>Mark Delivered</button>
+        </div>
+      )}
     </Modal>}
 
     
