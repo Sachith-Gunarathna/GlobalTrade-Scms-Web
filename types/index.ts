@@ -50,3 +50,51 @@ export type Supplier = {
   phone: string;
   onTimeRate: number;
 };
+
+export type DashboardKpis = {
+  totalShipments: number;
+  inTransit: number;
+  lowStockItems: number;
+  totalSuppliers: number;
+};
+
+export type DashboardShipmentStatus = {
+  pending: number;
+  inTransit: number;
+  delayed: number;
+  delivered: number;
+};
+
+export type DashboardAlert = {
+  type: string;
+  category: string;
+  referenceId: number | string | null;
+  title: string;
+  message: string;
+};
+
+export type DashboardShipment = {
+  id: number | string;
+  trackingNumber: number | string;
+  origin: string;
+  destination: string;
+  status: string;
+  estimatedDeliveryDate: string | null;
+  vendor: string;
+};
+
+export type DashboardActivity = {
+  id: number | string;
+  action: string;
+  methodName: string;
+  timestamp: string | null;
+  performedBy: string | null;
+};
+
+export type DashboardResponse = {
+  kpis: DashboardKpis;
+  shipmentStatus: DashboardShipmentStatus;
+  alerts: DashboardAlert[];
+  recentShipments: DashboardShipment[];
+  recentActivity: DashboardActivity[];
+};

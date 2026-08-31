@@ -234,3 +234,24 @@ export const updateProfileToBackend = async (profileData: any) => {
         return { success: false };
     }
 };
+
+export const getDashboardData = async () => {
+    try {
+
+        const response = await fetch(`${BASE_URL}/dashboard`, {
+            method: 'GET',
+            headers,
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch dashboard: ${response.status}`);
+        }
+
+        return await response.json();
+
+    } catch (error) {
+        console.error('Dashboard API error:', error);
+        return null;
+    }
+}
