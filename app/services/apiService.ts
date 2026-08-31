@@ -1,257 +1,249 @@
-const BASE_URL = "http://localhost:8080/Global-Trade-Scms/v1";
+import type {
+  ApiUser,
+  CustomsDocument,
+  DashboardResponse,
+  InventoryItem,
+  MonitoringSnapshot,
+  Order,
+  Shipment,
+  Supplier
+} from '@/types';
 
-const headers = {
-    'Content-Type': 'application/json',
+export const BASE_URL = process.env.NEXT_PUBLIC_SCMS_API_URL ?? 'http://localhost:8080/Global-Trade-Scms/v1';
+
+const jsonHeaders = {
+  'Content-Type': 'application/json',
+  Accept: 'application/json'
 };
 
-export const loginUser = async (credentials: {
-    email: string;
-    password: string;
-    rememberMe: boolean;
-}) => {
-
-    try {
-
-        const response = await fetch(`${BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-                email: credentials.email.trim(),
-                password: credentials.password
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            return {
-                success: false,
-                error: data.error || 'Invalid email or password.'
-            };
-        }
-
-        return data;
-
-    } catch (error) {
-
-        console.error('Login request failed:', error);
-
-        return {
-            success: false,
-            error: 'Unable to connect to the backend server.'
-        };
-    }
+type ErrorBody = {
+  message?: string;
+  error?: string;
 };
 
-export const registerUser = async (userData: any) => {
-    try {
-        const response = await fetch(`${BASE_URL}/auth/register`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(userData)
-        });
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      ...jsonHeaders,
+      ...(init.headers ?? {})
+    },
+    credentials: 'include',
+    cache: init.cache ?? 'no-store'
+  });
 
-        if (!response.ok) throw new Error('Failed to register');
-        return await response.json();
-    } catch (error) {
+  if (response.status === 204) return undefined as T;
 
-        console.info('Backend registration endpoint unreachable, continuing in client authentication mode.');
-        return null;
-    }
-};
+  const contentType = response.headers.get('content-type') ?? '';
+  const body = contentType.includes('application/json') ? await response.json() : await response.text();
 
-export const getAllShipments = async () => {
-    try {
+  if (!response.ok) {
+    const errorBody = typeof body === 'object' && body !== null ? body as ErrorBody : {};
+    const message = errorBody.message || errorBody.error || (typeof body === 'string' && body) || `Request failed with status ${response.status}.`;
+    throw new Error(message);
+  }
 
-        const response = await fetch(`${BASE_URL}/shipments`, {
-            method: 'GET', headers
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch shipments');
-        return await response.json();
-
-    } catch (error) {
-        console.error(error);
-        return [];
-    }
-};
-
-export const getAllInvetory = async () => {
-    const res = await fetch(`${BASE_URL}/inventory`, {
-        method: 'GET',
-        headers
-    });
-
-    if (!res.ok) throw new Error('Failed to fetch inventory');
-    return await res.json();
-};
-
-export const getAllCustomsDocs = async () => {
-    const res = await fetch(`${BASE_URL}/customs`, {
-        method: 'GET',
-        headers
-    });
-
-    if (!res.ok) throw new Error('Failed to fetch customs docs');
-    return await res.json();
-};
-
-export const createShipment = async (shipmentData: any) => {
-    try {
-
-        const response = await fetch(`${BASE_URL}/shipments`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(shipmentData)
-        });
-
-        if (!response.ok) throw new Error('Failed to create shipment');
-        return await response.json();
-
-    } catch (error) {
-        console.error(error);
-        return null;
-    }
-};
-
-export const updateShipmentStatus = async (id: any, status: any) => {
-    const res = await fetch(`${BASE_URL}/shipments/${id}/status?status=${status}`, {
-        method: 'PUT',
-        headers
-    });
-
-    if (!res.ok) throw new Error('Failed to update shipment status');
-    return await res.json();
-};
-
-export const getAllVendors = async () => {
-    try {
-
-        const response = await fetch(`${BASE_URL}/vendors`, {
-            method: 'GET',
-            headers
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch vendors')
-        return await response.json();
-
-    } catch (error) {
-        console.error(error);
-        return []
-    }
-};
-
-export const createVendor = async (data: any) => {
-    const res = await fetch(`${BASE_URL}/vendors`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(data)
-    });
-
-    if (!res.ok) throw new Error('Failed to create vendor')
-    return await res.json();
-
+  return body as T;
 }
 
+export async function loginUser(credentials: { email: string; password: string; rememberMe?: boolean }) {
+  return request<{ success: boolean; user: ApiUser }>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: credentials.email.trim(), password: credentials.password })
+  });
+}
 
+export async function registerUser(userData: Record<string, unknown>) {
+  return request<{ success: boolean; user: ApiUser }>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(userData)
+  });
+}
 
-export const verifySession = async (token: string) => {
-    try {
-        const response = await fetch(`${BASE_URL}/auth/verify`, {
-            method: 'GET',
-            headers: {
-                ...headers,
-                'Authorization': `Bearer ${token}`
-            }
-        });
+export async function verifySession() {
+  return request<{ success: boolean; user: ApiUser }>('/auth/verify');
+}
 
-        if (!response.ok) return null;
-        return await response.json();
-    } catch (error) {
-        return null;
-    }
-};
+export async function userLogOut() {
+  return request<{ success: boolean }>('/auth/logout', { method: 'POST' });
+}
 
-export const getUserPreferences = async (userId: string) => {
-    try {
-        const response = await fetch(`${BASE_URL}/users/${userId}/preferences`, {
-            method: 'GET',
-            headers
-        });
+export async function updateProfileToBackend(profileData: {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  department?: string;
+  hub?: string;
+  organization?: string;
+}) {
+  return request<{ success: boolean; user: ApiUser }>('/auth/profile', {
+    method: 'PUT',
+    body: JSON.stringify(profileData)
+  });
+}
 
-        if (!response.ok) throw new Error('Failed to fetch user preferences');
-        return await response.json();
-    } catch (error) {
+export async function changePassword(currentPassword: string, newPassword: string) {
+  return request<{ success: boolean; message: string }>('/auth/password', {
+    method: 'PUT',
+    body: JSON.stringify({ currentPassword, newPassword })
+  });
+}
 
-        return null;
-    }
-};
+export async function getDashboardData() {
+  return request<DashboardResponse>('/dashboard');
+}
 
-export const updateUserPreferences = async (userId: string, preferences: any) => {
-    try {
-        const response = await fetch(`${BASE_URL}/users/${userId}/preferences`, {
-            method: 'PUT',
-            headers,
-            body: JSON.stringify(preferences)
-        });
+export async function getAllShipments() {
+  return request<Shipment[]>('/shipments');
+}
 
-        if (!response.ok) throw new Error('Failed to update user preferences');
-        return await response.json();
-    } catch (error) {
+export async function createShipment(data: {
+  trackingNumber: string;
+  origin: string;
+  destination: string;
+  status: string;
+  estimatedDeliveryDate: string;
+  carrier: string;
+  vessel: string;
+  progress: number;
+  value: number;
+  weight: string;
+  vendorId: number;
+}) {
+  return request<Shipment>('/shipments', { method: 'POST', body: JSON.stringify(data) });
+}
 
-        return { success: true, preferences, syncedOffline: true };
-    }
-};
+export async function updateShipmentStatus(id: number, status: string) {
+  return request<Shipment>(`/shipments/${id}/status?value=${encodeURIComponent(status)}`, { method: 'PUT' });
+}
 
-export const userLogOut = async (token: string) => {
-    try {
-        const response = await fetch(`${BASE_URL}/auth/logout`, {
-            method: 'POST',
-            headers: {
-                ...headers,
-                'Authorization': `Bearer ${token}`
-            }
-        });
+export async function deleteShipment(id: number) {
+  return request<void>(`/shipments/${id}`, { method: 'DELETE' });
+}
 
-        if (!response.ok) throw new Error('Failed to logout');
-        return await response.json();
-    } catch (error) {
-        return null;
-    }
-};
+export async function getAllInventory() {
+  return request<InventoryItem[]>('/inventory');
+}
 
-export const updateProfileToBackend = async (profileData: any) => {
-    try {
-        const response = await fetch(`${BASE_URL}/auth/profile`, {
-            method: 'PUT',
-            headers,
-            body: JSON.stringify(profileData)
-        });
-        if (!response.ok) throw new Error('Failed to update profile in DB');
-        return await response.json();
-    } catch (error) {
-        console.error(error);
-        return { success: false };
-    }
-};
+export const getAllInvetory = getAllInventory;
 
-export const getDashboardData = async () => {
-    try {
+export async function createInventoryItem(data: {
+  sku: string;
+  name: string;
+  category: string;
+  stock: number;
+  threshold: number;
+  warehouse: string;
+  value: number;
+  capacity: number;
+  vendorId?: number;
+}) {
+  return request<InventoryItem>('/inventory', { method: 'POST', body: JSON.stringify(data) });
+}
 
-        const response = await fetch(`${BASE_URL}/dashboard`, {
-            method: 'GET',
-            headers,
-            cache: 'no-store'
-        });
+export async function updateInventoryQuantity(id: number, quantity: number) {
+  return request<InventoryItem>(`/inventory/${id}/quantity?value=${quantity}`, { method: 'PUT' });
+}
 
-        if (!response.ok) {
-            throw new Error(`Failed to fetch dashboard: ${response.status}`);
-        }
+export async function deleteInventoryItem(id: number) {
+  return request<void>(`/inventory/${id}`, { method: 'DELETE' });
+}
 
-        return await response.json();
+export async function getAllVendors() {
+  return request<Supplier[]>('/vendors');
+}
 
-    } catch (error) {
-        console.error('Dashboard API error:', error);
-        return null;
-    }
+export async function createVendor(data: {
+  code?: string;
+  name: string;
+  email: string;
+  phone: string;
+  country: string;
+  region: string;
+  category: string;
+  rating: number;
+  onTimeRate: number;
+  activeOrders: number;
+}) {
+  return request<Supplier>('/vendors', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateVendorScore(id: number, score: number) {
+  return request<Supplier>(`/vendors/${id}/score?value=${score}`, { method: 'PUT' });
+}
+
+export async function deleteVendor(id: number) {
+  return request<void>(`/vendors/${id}`, { method: 'DELETE' });
+}
+
+export async function getAllOrders() {
+  return request<Order[]>('/orders');
+}
+
+export async function createOrder(data: {
+  orderNumber: string;
+  customer: string;
+  itemCount: number;
+  totalAmount: number;
+  status: string;
+  orderDate: string;
+  region: string;
+  contact: string;
+  vendorId?: number;
+}) {
+  return request<Order>('/orders', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateOrderStatus(id: number, status: string) {
+  return request<Order>(`/orders/${id}/status?value=${encodeURIComponent(status)}`, { method: 'PUT' });
+}
+
+export async function getAllCustomsDocs() {
+  return request<CustomsDocument[]>('/customs');
+}
+
+export async function createCustomsDocument(data: {
+  documentNumber: string;
+  documentType: string;
+  status: string;
+  deadline: string;
+  notes: string;
+  shipmentId: number;
+}) {
+  return request<CustomsDocument>('/customs', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function approveCustomsDocument(id: number, notes: string) {
+  return request<CustomsDocument>(`/customs/${id}/approve?notes=${encodeURIComponent(notes)}`, { method: 'PUT' });
+}
+
+export async function rejectCustomsDocument(id: number, notes: string) {
+  return request<CustomsDocument>(`/customs/${id}/reject?notes=${encodeURIComponent(notes)}`, { method: 'PUT' });
+}
+
+export async function releaseCustomsShipment(id: number) {
+  return request<CustomsDocument>(`/customs/${id}/release`, { method: 'POST' });
+}
+
+export async function getMonitoringData() {
+  return request<MonitoringSnapshot>('/monitoring');
+}
+
+export async function getRoutePriorities() {
+  return request<Record<string, number>>('/monitoring/routes');
+}
+
+export async function applyRoutePriorities() {
+  return request<{ updated: number }>('/monitoring/routes/apply', { method: 'POST' });
+}
+
+export async function getUserPreferences(userEmail: string) {
+  return request<{ success: boolean; preferences: Record<string, unknown> }>(`/users/${encodeURIComponent(userEmail)}/preferences`);
+}
+
+export async function updateUserPreferences(userEmail: string, preferences: object) {
+  return request<{ success: boolean; preferences: Record<string, unknown> }>(`/users/${encodeURIComponent(userEmail)}/preferences`, {
+    method: 'PUT',
+    body: JSON.stringify(preferences)
+  });
 }

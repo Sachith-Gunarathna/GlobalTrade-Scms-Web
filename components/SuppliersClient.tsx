@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Mail,
   MapPinned,
@@ -21,6 +21,7 @@ import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
 import { CustomSelect } from './CustomSelect';
 import type { Supplier } from '@/types';
+import { createVendor, getAllVendors } from '@/app/services/apiService';
 
 const flags: Record<string, string> = {
   'Sri Lanka': '🇱🇰',
@@ -47,7 +48,6 @@ export function SuppliersClient({
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // New Supplier Form State
   const [newSupplier, setNewSupplier] = useState({
     id: `SUP-${Math.floor(100 + Math.random() * 900)}`,
     name: 'Lanka Industrial Fabrications PLC',
@@ -61,6 +61,14 @@ export function SuppliersClient({
     onTimeRate: 95.8,
   });
 
+  useEffect(() => {
+    let active = true;
+    getAllVendors()
+      .then((data) => { if (active) setSuppliersList(data); })
+      .catch((error) => { if (active) showToast(error instanceof Error ? error.message : 'Unable to load suppliers.'); });
+    return () => { active = false; };
+  }, []);
+
   const regions = ['All regions', ...Array.from(new Set(suppliersList.map((s) => s.region)))];
 
   const filtered = useMemo(() => suppliersList.filter((s) => {
@@ -68,42 +76,50 @@ export function SuppliersClient({
     return (region === 'All regions' || s.region === region) && (!q || `${s.name} ${s.country} ${s.category}`.toLowerCase().includes(q));
   }), [suppliersList, query, region]);
 
-  const avgRating = (suppliersList.reduce((sum, s) => sum + s.rating, 0) / suppliersList.length).toFixed(1);
+  const avgRating = (suppliersList.length ? suppliersList.reduce((sum, s) => sum + s.rating, 0) / suppliersList.length : 0).toFixed(1);
   const totalActiveOrders = suppliersList.reduce((sum, s) => sum + s.activeOrders, 0);
-  const avgOnTime = (suppliersList.reduce((sum, s) => sum + s.onTimeRate, 0) / suppliersList.length).toFixed(1);
+  const avgOnTime = (suppliersList.length ? suppliersList.reduce((sum, s) => sum + s.onTimeRate, 0) / suppliersList.length : 0).toFixed(1);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3200);
   };
 
-  const handleAddSupplier = (e: React.FormEvent) => {
+  const handleAddSupplier = async (e: React.FormEvent) => {
     e.preventDefault();
-    const created: Supplier = {
-      ...newSupplier,
-      rating: Number(newSupplier.rating),
-      activeOrders: Number(newSupplier.activeOrders),
-      onTimeRate: Number(newSupplier.onTimeRate),
-    };
-
-    setSuppliersList([created, ...suppliersList]);
-    setIsAddOpen(false);
-    showToast(`Supplier ${created.name} onboarded to partner network!`);
-
-    // Reset with new ID
-    setNewSupplier({
-      id: `SUP-${Math.floor(100 + Math.random() * 900)}`,
-      name: 'Tokyo Precision Robotics Ltd',
-      country: 'Japan',
-      region: 'East Asia',
-      category: 'Electronics & Sensors',
-      rating: 4.9,
-      activeOrders: 2,
-      email: 'export@tokyorobotics.jp',
-      phone: '+81 3 5555 0192',
-      onTimeRate: 98.2,
-    });
+    try {
+      const created = await createVendor({
+        code: newSupplier.id.trim(),
+        name: newSupplier.name.trim(),
+        country: newSupplier.country,
+        region: newSupplier.region.trim(),
+        category: newSupplier.category,
+        rating: Number(newSupplier.rating),
+        activeOrders: Number(newSupplier.activeOrders),
+        email: newSupplier.email.trim(),
+        phone: newSupplier.phone.trim(),
+        onTimeRate: Number(newSupplier.onTimeRate)
+      });
+      setSuppliersList((current) => [created, ...current]);
+      setIsAddOpen(false);
+      showToast(`Supplier ${created.name} onboarded to the partner network.`);
+      setNewSupplier({
+        id: `SUP-${Math.floor(100 + Math.random() * 900)}`,
+        name: 'Tokyo Precision Robotics Ltd',
+        country: 'Japan',
+        region: 'East Asia',
+        category: 'Electronics & Sensors',
+        rating: 4.9,
+        activeOrders: 2,
+        email: 'export@tokyorobotics.jp',
+        phone: '+81 3 5555 0192',
+        onTimeRate: 98.2
+      });
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to add supplier.');
+    }
   };
+
 
   return <>
     <PageHeader
@@ -182,7 +198,7 @@ export function SuppliersClient({
       </section>
     ) : <EmptyState title="No suppliers match filter"/>}
 
-    {/* Create Supplier Modal */}
+    
     {isAddOpen && (
       <Modal
         title="Add New Vendor / Supplier"
@@ -333,7 +349,7 @@ export function SuppliersClient({
       </Modal>
     )}
 
-    {/* Toast notification */}
+    
     {toastMessage && (
       <div className="toast">
         <CheckCircle2 size={16} />

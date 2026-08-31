@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Boxes,
@@ -18,7 +18,8 @@ import { PageHeader } from './PageHeader';
 import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
 import { CustomSelect } from './CustomSelect';
-import type { InventoryItem } from '@/types';
+import type { InventoryItem, Supplier } from '@/types';
+import { createInventoryItem, getAllInventory, getAllVendors } from '@/app/services/apiService';
 
 export function InventoryClient({
   inventory: initialInventory,
@@ -32,8 +33,8 @@ export function InventoryClient({
   const [query, setQuery] = useState(initialQuery);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [vendors, setVendors] = useState<Supplier[]>([]);
 
-  // New Item State
   const [newItem, setNewItem] = useState({
     sku: `ELX-${Math.floor(4000 + Math.random() * 5000)}`,
     name: 'GPS Telematics Fleet Tracker Sensors',
@@ -43,8 +44,23 @@ export function InventoryClient({
     warehouse: 'Colombo Central Distribution Center',
     value: 36000,
     capacity: 400,
+    vendorId: 0,
   });
 
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([getAllInventory(), getAllVendors()])
+      .then(([items, vendorData]) => {
+        if (!active) return;
+        setInventoryList(items);
+        setVendors(vendorData);
+      })
+      .catch((error) => {
+        if (active) showToast(error instanceof Error ? error.message : 'Unable to load inventory.');
+      });
+    return () => { active = false; };
+  }, []);
   const categories = ['All', ...Array.from(new Set(inventoryList.map((i) => i.category)))];
 
   const filtered = useMemo(() => inventoryList.filter((i) => {
@@ -60,32 +76,39 @@ export function InventoryClient({
     setTimeout(() => setToastMessage(null), 3200);
   };
 
-  const handleAddItem = (e: React.FormEvent) => {
+  const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    const created: InventoryItem = {
-      ...newItem,
-      stock: Number(newItem.stock),
-      threshold: Number(newItem.threshold),
-      capacity: Number(newItem.capacity),
-      value: Number(newItem.value),
-    };
-
-    setInventoryList([created, ...inventoryList]);
-    setIsAddOpen(false);
-    showToast(`SKU ${created.sku} (${created.name}) registered in warehouse catalog!`);
-
-    // Reset with new SKU
-    setNewItem({
-      sku: `PKG-${Math.floor(6000 + Math.random() * 3000)}`,
-      name: 'High-Density Reinforced Container Pallets',
-      category: 'Packaging',
-      stock: 180,
-      threshold: 50,
-      warehouse: 'Hambantota Port Free Zone DC',
-      value: 14500,
-      capacity: 350,
-    });
+    try {
+      const created = await createInventoryItem({
+        sku: newItem.sku.trim(),
+        name: newItem.name.trim(),
+        category: newItem.category,
+        stock: Number(newItem.stock),
+        threshold: Number(newItem.threshold),
+        warehouse: newItem.warehouse,
+        value: Number(newItem.value),
+        capacity: Number(newItem.capacity),
+        vendorId: newItem.vendorId || undefined
+      });
+      setInventoryList((current) => [created, ...current]);
+      setIsAddOpen(false);
+      showToast(`SKU ${created.sku} registered in the warehouse catalog.`);
+      setNewItem({
+        sku: `PKG-${Math.floor(6000 + Math.random() * 3000)}`,
+        name: 'High-Density Reinforced Container Pallets',
+        category: 'Packaging',
+        stock: 180,
+        threshold: 50,
+        warehouse: 'Hambantota Port Free Zone DC',
+        value: 14500,
+        capacity: 350,
+        vendorId: newItem.vendorId
+      });
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to add inventory item.');
+    }
   };
+
 
   return <>
     <PageHeader
@@ -188,7 +211,7 @@ export function InventoryClient({
       </div>
     </section>
 
-    {/* Add Item Modal Form */}
+    
     {isAddOpen && (
       <Modal
         title="Register New Inventory SKU"
@@ -234,20 +257,31 @@ export function InventoryClient({
             />
           </div>
 
-          <div className="form-group">
-            <label><Warehouse size={13} /> Warehouse Location</label>
-            <CustomSelect
-              options={[
-                'Colombo Central Distribution Center',
-                'Port of Colombo Transshipment Hub',
-                'Hambantota Port Free Zone DC',
-                'Kandy Regional Logistics Depot',
-                'Anuradhapura Logistics Warehouse',
-                'Trincomalee Harbor Depot'
-              ]}
-              value={newItem.warehouse}
-              onChange={(val) => setNewItem({ ...newItem, warehouse: val })}
-            />
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label>Supplier</label>
+              <CustomSelect
+                options={[{ value: '0', label: 'No supplier assigned' }, ...vendors.map((vendor) => ({ value: String(vendor.databaseId ?? 0), label: `${vendor.id} — ${vendor.name}` }))]}
+                value={String(newItem.vendorId)}
+                onChange={(value) => setNewItem({ ...newItem, vendorId: Number(value) })}
+                searchable
+              />
+            </div>
+            <div className="form-group">
+              <label><Warehouse size={13} /> Warehouse Location</label>
+              <CustomSelect
+                options={[
+                  'Colombo Central Distribution Center',
+                  'Port of Colombo Transshipment Hub',
+                  'Hambantota Port Free Zone DC',
+                  'Kandy Regional Logistics Depot',
+                  'Anuradhapura Logistics Warehouse',
+                  'Trincomalee Harbor Depot'
+                ]}
+                value={newItem.warehouse}
+                onChange={(val) => setNewItem({ ...newItem, warehouse: val })}
+              />
+            </div>
           </div>
 
           <div className="form-grid-3">
@@ -306,7 +340,7 @@ export function InventoryClient({
       </Modal>
     )}
 
-    {/* Toast notification */}
+    
     {toastMessage && (
       <div className="toast">
         <CheckCircle2 size={16} />

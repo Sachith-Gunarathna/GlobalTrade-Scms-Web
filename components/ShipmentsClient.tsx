@@ -8,7 +8,6 @@ import {
   MapPin,
   Search,
   Ship,
-  SlidersHorizontal,
   Truck,
   Plus,
   CheckCircle2,
@@ -30,10 +29,10 @@ import { StatusBadge } from './StatusBadge';
 import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
 import { CustomSelect } from './CustomSelect';
-import type { Shipment, ShipmentStatus } from '@/types';
-import { createShipment, getAllShipments } from '@/app/services/apiService';
+import type { Shipment, ShipmentStatus, Supplier } from '@/types';
+import { createShipment, getAllShipments, getAllVendors } from '@/app/services/apiService';
 
-const statuses = ['All', 'In Transit', 'Delayed', 'Delivered', 'Pending'];
+const statuses = ['All', 'In Transit', 'Delayed', 'Delivered', 'Pending', 'Customs Hold', 'Cancelled'];
 
 const flags: Record<string, string> = {
   CN: '🇨🇳',
@@ -105,23 +104,22 @@ export function ShipmentsClient({
   const [selected, setSelected] = useState<Shipment | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [vendors, setVendors] = useState<Supplier[]>([]);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-
-        const data = await getAllShipments();
-
-        if (data && DataTransfer.length > 0) {
-          setShipmentsList(data);
-        }
-
-      } catch (error) {
-        console.error("Failed to fetch shipments from backend:", error);
-      }
-    };
-    loadData();
+    let active = true;
+    Promise.all([getAllShipments(), getAllVendors()])
+      .then(([shipmentData, vendorData]) => {
+        if (!active) return;
+        setShipmentsList(shipmentData);
+        setVendors(vendorData);
+      })
+      .catch((error) => {
+        if (active) showToast(error instanceof Error ? error.message : 'Unable to load shipment data.');
+      });
+    return () => { active = false; };
   }, []);
+
 
 
   const [newShipment, setNewShipment] = useState({
@@ -135,6 +133,7 @@ export function ShipmentsClient({
     value: 195000,
     weight: '16.5 t',
     progress: 25,
+    vendorId: 0,
   });
 
   const origins = ['All origins', ...Array.from(new Set(shipmentsList.map((s) => s.origin)))];
@@ -158,41 +157,37 @@ export function ShipmentsClient({
 
   const handleCreateShipment = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    try {
-
-      const payload = {
-        trackingNumber: newShipment.id,
-        origin: newShipment.origin,
-        destination: newShipment.destination,
-        status: newShipment.status.toUpperCase(),
-        expectedDeliveryDate: newShipment.eta + "T00:00:00",
-
-        vendor: { id: 1 }
-      };
-
-      const createdShipment: any = await createShipment(payload);
-
-      if (createdShipment) {
-
-        setShipmentsList([createdShipment, ...shipmentsList]);
-
-        setIsCreateOpen(false);
-        showToast(`Shipment ${createdShipment.trackingNumber} created and dispatched successfully!`)
-
-        setNewShipment({
-          ...newShipment,
-          id: `SHP-${Math.floor(78400 + Math.random() * 900)}`
-        });
-      }
-
-    } catch (error) {
-
-      console.error(error);
-      alert("Failed to dispatch shipment. Please check the backend connection.");
+    if (!newShipment.vendorId) {
+      showToast('Select a supplier before dispatching the shipment.');
+      return;
     }
-
+    try {
+      const createdShipment = await createShipment({
+        trackingNumber: newShipment.id.trim(),
+        origin: newShipment.origin.trim(),
+        destination: newShipment.destination.trim(),
+        status: newShipment.status,
+        estimatedDeliveryDate: `${newShipment.eta}T12:00:00`,
+        carrier: newShipment.carrier.trim(),
+        vessel: newShipment.vessel.trim(),
+        progress: newShipment.progress,
+        value: newShipment.value,
+        weight: newShipment.weight.trim(),
+        vendorId: newShipment.vendorId
+      });
+      setShipmentsList((current) => [createdShipment, ...current]);
+      setIsCreateOpen(false);
+      showToast(`Shipment ${createdShipment.id} created successfully.`);
+      setNewShipment((current) => ({
+        ...current,
+        id: `SHP-${Math.floor(78400 + Math.random() * 900)}`,
+        vendorId: current.vendorId
+      }));
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to create shipment.');
+    }
   };
+
 
   return <>
     <PageHeader
@@ -322,7 +317,6 @@ export function ShipmentsClient({
         <span>
           Showing <strong>{filtered.length}</strong> of <strong>{shipmentsList.length}</strong> tracked shipments
         </span>
-        <button><SlidersHorizontal size={13} /> Customize Columns</button>
       </div>
 
       <div className="table-wrap">
@@ -413,7 +407,7 @@ export function ShipmentsClient({
       </div>
     </section>
 
-    {/* Detail Modal */}
+    
     {selected && <Modal title={`Shipment ${selected.id}`} subtitle={`${selected.origin} → ${selected.destination}`} onClose={() => setSelected(null)}>
       <div className="detail-hero">
         <span className="detail-icon"><Ship size={26} /></span>
@@ -495,6 +489,29 @@ export function ShipmentsClient({
                 value={newShipment.destination}
                 onChange={(e) => setNewShipment({ ...newShipment, destination: e.target.value })}
                 placeholder="e.g. Kandy Regional Depot, Galle Port"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label><Building size={13} /> Supplier</label>
+              <CustomSelect
+                options={[{ value: '0', label: 'Select supplier' }, ...vendors.map((vendor) => ({ value: String(vendor.databaseId ?? 0), label: `${vendor.id} — ${vendor.name}` }))]}
+                value={String(newShipment.vendorId)}
+                onChange={(value) => setNewShipment({ ...newShipment, vendorId: Number(value) })}
+                searchable
+              />
+            </div>
+            <div className="form-group">
+              <label>Route Progress (%)</label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={newShipment.progress}
+                onChange={(e) => setNewShipment({ ...newShipment, progress: Number(e.target.value) })}
                 required
               />
             </div>

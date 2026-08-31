@@ -250,7 +250,7 @@ export function DashboardClient() {
   return (
     <>
 
-      {/* PAGE HEADER */}
+      
 
       <div className="page-header dashboard-head">
 
@@ -277,7 +277,7 @@ export function DashboardClient() {
       </div>
 
 
-      {/* KPI CARDS */}
+      
 
       <section className="kpi-grid">
 
@@ -326,13 +326,13 @@ export function DashboardClient() {
       </section>
 
 
-      {/* STATUS + ALERTS */}
+      
 
       <section
         className="dashboard-grid dashboard-primary"
       >
 
-        {/* SHIPMENT STATUS */}
+        
 
         <article
           className="panel chart-panel glass-panel span-2"
@@ -418,7 +418,7 @@ export function DashboardClient() {
         </article>
 
 
-        {/* OPERATIONAL ALERTS */}
+        
 
         <article
           className="panel alerts-panel glass-panel"
@@ -515,13 +515,13 @@ export function DashboardClient() {
       </section>
 
 
-      {/* RECENT SHIPMENTS + ACTIVITY */}
+      
 
       <section
         className="dashboard-grid dashboard-secondary"
       >
 
-        {/* RECENT SHIPMENTS */}
+        
 
         <article
           className="panel glass-panel span-2"
@@ -633,7 +633,7 @@ export function DashboardClient() {
         </article>
 
 
-        {/* RECENT AUDIT ACTIVITY */}
+        
 
         <article
           className="panel alerts-panel glass-panel"

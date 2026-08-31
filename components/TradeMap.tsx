@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Navigation, Truck, Activity, ArrowRight, ShieldCheck, Layers, Eye } from 'lucide-react';
 
-/* ── Sri Lanka 9 Provinces (SVG Path definitions in 0 0 350 450 coordinates) ── */
+
 interface Province {
   id: string;
   name: string;
@@ -108,7 +108,7 @@ const PROVINCES: Province[] = [
   },
 ];
 
-/* ── Sri Lanka City Hubs ─────────────────────────────────────────────────── */
+
 export interface CityHub {
   id: string;
   name: string;
@@ -269,7 +269,7 @@ const CITY_HUBS: CityHub[] = [
   },
 ];
 
-/* ── Active Domestic Trade Routes ────────────────────────────────────────── */
+
 interface TradeRoute {
   id: string;
   name: string;
@@ -418,7 +418,7 @@ export function TradeMap() {
 
   return (
     <div className="sl-trade-map-container">
-      {/* Top Filter Buttons */}
+      
       <div className="sl-map-toolbar">
         <div className="sl-filter-pills">
           <button
@@ -452,9 +452,9 @@ export function TradeMap() {
         </div>
       </div>
 
-      {/* Main Map Box */}
+      
       <div className="sl-map-viewport">
-        {/* Background Grid Lines & Island Atmosphere */}
+        
         <div className="sl-grid-overlay" />
         <div className="sl-radial-glow" />
 
@@ -474,7 +474,7 @@ export function TradeMap() {
             </filter>
           </defs>
 
-          {/* ── 1. PROVINCE POLYGONS & BOUNDARIES ── */}
+          
           <g className="sl-provinces-layer">
             {PROVINCES.map((prov) => {
               const isHovered = hoveredProvince?.id === prov.id;
@@ -496,7 +496,7 @@ export function TradeMap() {
                     onMouseEnter={() => setHoveredProvince(prov)}
                     onMouseLeave={() => setHoveredProvince(null)}
                   />
-                  {/* Province label */}
+                  
                   <text
                     x={prov.center.x}
                     y={prov.center.y}
@@ -510,7 +510,7 @@ export function TradeMap() {
             })}
           </g>
 
-          {/* ── 2. ANIMATED TRADE ROUTES / HIGHWAY LANES ── */}
+          
           <g className="sl-routes-layer">
             {filteredRoutes.map((route, idx) => {
               const isHighlighted =
@@ -518,7 +518,7 @@ export function TradeMap() {
 
               return (
                 <g key={route.id} className={`sl-route-group ${isHighlighted ? 'highlighted' : ''}`}>
-                  {/* Route outer background glow */}
+                  
                   <path
                     d={route.d}
                     fill="none"
@@ -527,7 +527,7 @@ export function TradeMap() {
                     strokeOpacity={isHighlighted ? 0.35 : 0.12}
                     strokeLinecap="round"
                   />
-                  {/* Route dashed cargo stream */}
+                  
                   <path
                     d={route.d}
                     fill="none"
@@ -546,7 +546,7 @@ export function TradeMap() {
             })}
           </g>
 
-          {/* ── 3. CITY HUBS / LOGISTICS CENTERS ── */}
+          
           <g className="sl-hubs-layer">
             {CITY_HUBS.map((hub) => {
               const isSelected = selectedHub?.id === hub.id;
@@ -559,7 +559,7 @@ export function TradeMap() {
                   onClick={() => setSelectedHub(hub)}
                   style={{ cursor: 'pointer' }}
                 >
-                  {/* Radar pulse for Colombo HQ & Selected Hub */}
+                  
                   {(hub.type === 'hq' || isSelected) && (
                     <>
                       <circle
@@ -579,7 +579,7 @@ export function TradeMap() {
                     </>
                   )}
 
-                  {/* Hub Halo */}
+                  
                   <circle
                     cx={hub.x}
                     cy={hub.y}
@@ -595,7 +595,7 @@ export function TradeMap() {
                     }}
                   />
 
-                  {/* Hub Center Dot */}
+                  
                   <circle
                     cx={hub.x}
                     cy={hub.y}
@@ -613,7 +613,7 @@ export function TradeMap() {
                     }}
                   />
 
-                  {/* City Label */}
+                  
                   <text
                     x={hub.x > 190 ? hub.x + 7 : hub.x < 110 ? hub.x - 7 : hub.x}
                     y={
@@ -638,7 +638,7 @@ export function TradeMap() {
           </g>
         </svg>
 
-        {/* Province Hover Callout (Top Right) */}
+        
         {hoveredProvince && (
           <div className="sl-province-tooltip glass-panel">
             <strong>{hoveredProvince.name}</strong>
@@ -652,7 +652,7 @@ export function TradeMap() {
         )}
       </div>
 
-      {/* Selected Hub Card (Cleanly Placed Below Viewport - Zero Overlapping!) */}
+      
       {selectedHub && (
         <div className="sl-hub-card-bottom glass-panel">
           <div className="sl-card-header">
@@ -711,7 +711,7 @@ export function TradeMap() {
         </div>
       )}
 
-      {/* Map Footer / Key Legend */}
+      
       <div className="sl-map-footer">
         <div className="sl-legend-items">
           <span className="sl-legend-item">

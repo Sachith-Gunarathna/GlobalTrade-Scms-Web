@@ -150,7 +150,9 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
 
 
       const userId = getCurrentUserId();
-      await updateUserPreferences(userId, updated);
+      if (userId) {
+        await updateUserPreferences(String(userId), updated);
+      }
 
       return { success: true };
     } catch (err: any) {

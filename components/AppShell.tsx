@@ -28,22 +28,27 @@ import {
   Truck,
   UsersRound,
   Building2,
-  X
+  X,
+  ShieldCheck,
+  Activity
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import shipments from '@/data/shipments.json';
 import orders from '@/data/orders.json';
 import inventory from '@/data/inventory.json';
 import suppliers from '@/data/suppliers.json';
-import { userLogOut } from '@/app/services/apiService';
+import { userLogOut, verifySession } from '@/app/services/apiService';
+import type { ApiUser } from '@/types';
 
 const nav = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard, keywords: 'home overview kpi command center sri lanka routes' },
-  { href: '/shipments', label: 'Shipments', icon: Truck, keywords: 'carrier eta routes delivery vessel logistics colombo galle hambantota' },
-  { href: '/orders', label: 'Orders', icon: ShoppingCart, keywords: 'customer processing sales fulfillment' },
-  { href: '/inventory', label: 'Inventory', icon: Boxes, keywords: 'stock sku warehouse products replenishment' },
-  { href: '/suppliers', label: 'Suppliers', icon: UsersRound, keywords: 'vendor country contact rating sourcing' },
-  { href: '/analytics', label: 'Analytics', icon: ChartNoAxesCombined, keywords: 'revenue charts performance metrics intelligence' }
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard, keywords: 'home overview kpi command center sri lanka routes', roles: ['ADMIN', 'LOGISTICS_COORDINATOR', 'WAREHOUSE_MANAGER', 'CUSTOMS_AGENT', 'VENDOR_REP'] },
+  { href: '/shipments', label: 'Shipments', icon: Truck, keywords: 'carrier eta routes delivery vessel logistics colombo galle hambantota', roles: ['ADMIN', 'LOGISTICS_COORDINATOR', 'WAREHOUSE_MANAGER', 'CUSTOMS_AGENT', 'VENDOR_REP'] },
+  { href: '/orders', label: 'Orders', icon: ShoppingCart, keywords: 'customer processing sales fulfillment', roles: ['ADMIN', 'LOGISTICS_COORDINATOR', 'WAREHOUSE_MANAGER', 'VENDOR_REP'] },
+  { href: '/inventory', label: 'Inventory', icon: Boxes, keywords: 'stock sku warehouse products replenishment', roles: ['ADMIN', 'LOGISTICS_COORDINATOR', 'WAREHOUSE_MANAGER', 'VENDOR_REP'] },
+  { href: '/suppliers', label: 'Suppliers', icon: UsersRound, keywords: 'vendor country contact rating sourcing', roles: ['ADMIN', 'LOGISTICS_COORDINATOR', 'WAREHOUSE_MANAGER', 'CUSTOMS_AGENT', 'VENDOR_REP'] },
+  { href: '/customs', label: 'Trade Compliance', icon: ShieldCheck, keywords: 'customs clearance declaration permit compliance trade', roles: ['ADMIN', 'LOGISTICS_COORDINATOR', 'CUSTOMS_AGENT', 'VENDOR_REP'] },
+  { href: '/analytics', label: 'Analytics', icon: ChartNoAxesCombined, keywords: 'revenue charts performance metrics intelligence', roles: ['ADMIN', 'LOGISTICS_COORDINATOR', 'WAREHOUSE_MANAGER', 'CUSTOMS_AGENT', 'VENDOR_REP'] },
+  { href: '/monitoring', label: 'Monitoring', icon: Activity, keywords: 'timers interceptors performance audit alerts ejb', roles: ['ADMIN', 'LOGISTICS_COORDINATOR', 'WAREHOUSE_MANAGER', 'CUSTOMS_AGENT'] }
 ];
 
 const extraNav = [
@@ -78,8 +83,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     pathname === '/signin' ||
     pathname === '/signup';
 
-  const [user, setUser] = useState<any>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<ApiUser | null>(null);
+  const [authChecked, setAuthChecked] = useState(isAuthRoute);
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -97,6 +102,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (!q) return [];
 
     const moduleResults = allNav
+      .filter((item) => !('roles' in item) || item.roles.includes(user?.role ?? ''))
       .filter((item) => `${item.label} ${item.keywords}`.toLowerCase().includes(q))
       .map((item) => ({ href: item.href, label: item.label, meta: 'Workspace module', icon: item.icon }));
 
@@ -117,19 +123,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       .map((item) => ({ href: `/suppliers?q=${encodeURIComponent(item.name)}`, label: item.name, meta: `${item.country} · ${item.category}`, icon: UsersRound }));
 
     return [...moduleResults, ...shipmentResults, ...orderResults, ...inventoryResults, ...supplierResults].slice(0, 8);
-  }, [query]);
+  }, [query, user?.role]);
 
   useEffect(() => {
+    let activeRequest = true;
 
-    const storedUserData = localStorage.getItem('scms_user');
-
-    if (storedUserData) {
-      const parsedData = JSON.parse(storedUserData);
-      setUser(parsedData);
-      setToken(parsedData.token);
-    } else if (!isAuthRoute) {
-      router.push('/login');
-    };
+    if (isAuthRoute) {
+      setAuthChecked(true);
+    } else {
+      setAuthChecked(false);
+      verifySession()
+        .then((result) => {
+          if (!activeRequest) return;
+          setUser(result.user);
+          localStorage.setItem('scms_user', JSON.stringify(result.user));
+          setAuthChecked(true);
+        })
+        .catch(() => {
+          if (!activeRequest) return;
+          localStorage.removeItem('scms_user');
+          setUser(null);
+          setAuthChecked(true);
+          router.replace('/login');
+        });
+    }
 
     const saved = window.localStorage.getItem('globaltrade-sidebar-collapsed');
     if (saved === 'true') setCollapsed(true);
@@ -147,25 +164,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       }
     };
     window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [pathname, isAuthRoute, router]);
+    return () => {
+      activeRequest = false;
+      window.removeEventListener('keydown', handler);
+    };
+  }, [isAuthRoute, router]);
 
   const handleLogOut = async () => {
     try {
-
-      if (token) {
-        await userLogOut(token);
-      }
-
-    } catch (error) {
-      console.error("Backend logout failed, clearing local session anyway.");
+      await userLogOut();
+    } catch {
+      localStorage.removeItem('scms_user');
     } finally {
       localStorage.removeItem('scms_user');
       setUser(null);
-      setToken(null);
       setProfileOpen(false);
-
-      router.push('/login');
+      router.replace('/login');
     }
   };
 
@@ -191,6 +205,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  if (!authChecked || !user) {
+    return <div className="app-loading" aria-label="Checking session" />;
+  }
 
   return (
     <div className={`app-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
@@ -205,7 +222,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <nav className="side-nav" aria-label="Primary navigation">
           <p className="nav-caption">Workspace</p>
-          {nav.map((item) => {
+          {nav.filter((item) => item.roles.includes(user.role)).map((item) => {
             const Icon = item.icon;
             const selected = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
             return (
@@ -309,7 +326,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             <div className="dropdown-wrap profile-wrap">
               <button className="profile-button" onClick={() => { setProfileOpen((v) => !v); setNotifOpen(false); }}>
-                <span className="avatar">{user?.avatar || `${user?.firstName[0] || 'U'}${user?.lastName[0] || 'G'}`}</span>
+                <span className="avatar">{`${user.firstName?.[0] || 'U'}${user.lastName?.[0] || 'G'}`}</span>
                 <span className="profile-meta"><strong>{user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Alex Grant'}</strong><small>{user?.role?.split('&')[0] || user?.title || 'Operations Director'}</small></span>
                 <ChevronDown size={15} />
               </button>
@@ -335,8 +352,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     className="dropdown-nav-btn danger-text"
                     onClick={() => {
                       setProfileOpen(false);
-                      handleLogOut();
-                      router.push('/login');
+                      void handleLogOut();
                     }}
                     style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}
                   >

@@ -22,7 +22,7 @@
   color-scheme: dark;
 }
 
-/* OLED Midnight Black Theme */
+
 [data-theme="oled"] {
   --bg: #000000;
   --bg-2: #050505;
@@ -48,7 +48,7 @@
     linear-gradient(180deg, #000000 0%, #030406 100%);
 }
 
-/* Cyber Slate Theme */
+
 [data-theme="slate"] {
   --bg: #0b0f19;
   --bg-2: #111827;
@@ -73,14 +73,14 @@
     linear-gradient(180deg, #0b0f19 0%, #080b12 100%);
 }
 
-/* Animations Disabled */
+
 [data-animations="false"] * {
   animation-duration: 0.001ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;
 }
 
-/* High-Density Compact Data Tables */
+
 [data-compact="true"] .table-wrap td {
   padding: 8px 12px !important;
   font-size: 10.5px !important;
@@ -91,7 +91,7 @@
   font-size: 8.5px !important;
 }
 
-/* Map Radar Pulse Disabled */
+
 [data-map-radar="false"] .sl-radar-ring,
 [data-map-radar="false"] .sl-radar-ring-2,
 [data-map-radar="false"] .sl-hub-halo,
@@ -1257,7 +1257,7 @@ kbd {
   box-shadow: 0 0 8px #10b981
 }
 
-/* ── Sri Lanka Island-wide Trade & Logistics Map ─────────────── */
+
 .map-panel {
   display: flex;
   flex-direction: column;
@@ -1364,7 +1364,7 @@ kbd {
   filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.45));
 }
 
-/* Provinces */
+
 .sl-province-path {
   stroke-width: 0.85;
   stroke-linejoin: round;
@@ -1392,7 +1392,7 @@ kbd {
   font-family: Inter, system-ui, sans-serif;
 }
 
-/* Routes */
+
 .sl-cargo-stream {
   animation: slStreamDash linear infinite;
 }
@@ -1411,7 +1411,7 @@ kbd {
   filter: drop-shadow(0 0 4px currentColor);
 }
 
-/* Hub Nodes */
+
 .sl-hub-node {
   transition: transform 0.2s ease;
 }
@@ -1487,7 +1487,7 @@ kbd {
   fill: #ffffff;
 }
 
-/* Selected Hub Dedicated Bottom Card (Positioned cleanly below map) */
+
 .sl-hub-card-bottom {
   background: rgba(10, 18, 36, 0.88);
   border: 1px solid rgba(59, 130, 246, 0.18);
@@ -1648,7 +1648,7 @@ kbd {
   color: #bfdbfe;
 }
 
-/* Province Tooltip */
+
 .sl-province-tooltip {
   position: absolute;
   top: 12px;
@@ -1684,7 +1684,7 @@ kbd {
   margin-top: 4px;
 }
 
-/* Map Footer & Legend */
+
 .sl-map-footer {
   display: flex;
   align-items: center;
@@ -1891,7 +1891,7 @@ kbd {
   box-shadow: 0 0 12px rgba(245, 158, 11, 0.12);
 }
 
-/* Shipment Table Specific Elements */
+
 .shipment-id-wrap {
   display: flex;
   flex-direction: column;
@@ -2277,7 +2277,7 @@ kbd {
   color: #64748b
 }
 
-/* Shipments progress cell */
+
 .progress-cell {
   display: flex;
   align-items: center;
@@ -3500,7 +3500,7 @@ kbd {
   width: 104px
 }
 
-/* toolbar-group overrides handled in the main definition above */
+
 
 @media (max-width: 900px) {
   .toolbar-group {
@@ -3562,7 +3562,7 @@ kbd {
   }
 }
 
-/* Route-level loading and 404 additions */
+
 .loading-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3637,7 +3637,7 @@ kbd {
   }
 }
 
-/* Global search / interactive state refinements */
+
 .search-results button {
   align-items: center;
 }
@@ -3700,7 +3700,7 @@ kbd {
   cursor: pointer;
 }
 
-/* Dashboard loading composition */
+
 .dashboard-loading {
   display: grid;
   gap: 18px;
@@ -3751,7 +3751,7 @@ kbd {
   }
 }
 
-/* ── Account, Preferences & Settings Interfaces ──────────────── */
+
 .account-container,
 .preferences-container,
 .settings-container {
@@ -3761,7 +3761,7 @@ kbd {
   max-width: 1200px;
 }
 
-/* Account Hero Header */
+
 .account-hero {
   border-radius: 18px;
   padding: 22px 26px;
@@ -3892,7 +3892,7 @@ kbd {
   flex: none;
 }
 
-/* Tabs Bar */
+
 .settings-tabs-bar {
   display: flex;
   align-items: center;
@@ -3936,7 +3936,7 @@ kbd {
   box-shadow: inset 0 2px #3b82f6;
 }
 
-/* Panel Body */
+
 .settings-panel {
   border-radius: 16px;
   padding: 24px;
@@ -3967,7 +3967,7 @@ kbd {
   color: #64748b;
 }
 
-/* Form Styles */
+
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -4033,7 +4033,7 @@ kbd {
   border-top: 1px solid rgba(148, 163, 184, 0.08);
 }
 
-/* Security Sub Box */
+
 .security-sub-box {
   background: rgba(10, 18, 36, 0.45);
   border: 1px solid rgba(148, 163, 184, 0.1);
@@ -4056,7 +4056,7 @@ kbd {
   color: #64748b;
 }
 
-/* Toggle Rows */
+
 .preference-toggle-list {
   display: flex;
   flex-direction: column;
@@ -4162,7 +4162,7 @@ kbd {
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
 }
 
-/* Permissions Grid */
+
 .permissions-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -4205,7 +4205,7 @@ kbd {
   line-height: 1.45;
 }
 
-/* Sessions */
+
 .sessions-list {
   display: flex;
   flex-direction: column;
@@ -4307,7 +4307,7 @@ kbd {
   color: #ffffff;
 }
 
-/* Theme Previews */
+
 .theme-selector-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -4413,7 +4413,7 @@ kbd {
   text-transform: uppercase;
 }
 
-/* Integrations */
+
 .integrations-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -4481,7 +4481,7 @@ kbd {
   line-height: 1.45;
 }
 
-/* API Key Box */
+
 .api-key-box {
   background: rgba(10, 18, 36, 0.45);
   border: 1px solid rgba(148, 163, 184, 0.1);
@@ -4523,7 +4523,7 @@ kbd {
   font-size: 10px;
 }
 
-/* Backup Cards */
+
 .backup-actions-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -4554,7 +4554,7 @@ kbd {
   flex: 1;
 }
 
-/* Dropdown Nav Buttons */
+
 .dropdown-nav-btn {
   width: 100%;
   display: flex;
@@ -4573,7 +4573,7 @@ kbd {
   color: #ffffff;
 }
 
-/* Responsive Overrides */
+
 @media (max-width: 900px) {
   .form-grid-2,
   .form-grid-3,
@@ -4590,9 +4590,7 @@ kbd {
   }
 }
 
-/* ==========================================================================
-   AUTHENTICATION STYLES (Sign In & Register)
-   ========================================================================== */
+
 
 .auth-page-wrapper {
   min-height: 100vh;
@@ -4649,7 +4647,7 @@ kbd {
   min-height: 640px;
 }
 
-/* Auth Left Hero Pane */
+
 .auth-hero-pane {
   background: linear-gradient(155deg, rgba(12, 22, 45, 0.96) 0%, rgba(6, 11, 24, 0.98) 100%);
   border-right: 1px solid rgba(56, 189, 248, 0.14);
@@ -4743,7 +4741,7 @@ kbd {
   margin: 0 0 22px;
 }
 
-/* Hero Stats Row */
+
 .auth-hero-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -4779,7 +4777,7 @@ kbd {
   margin-top: 2px;
 }
 
-/* Hubs Pill List */
+
 .auth-hubs-list {
   display: flex;
   flex-wrap: wrap;
@@ -4822,7 +4820,7 @@ kbd {
   font-weight: 600;
 }
 
-/* Auth Right Form Pane */
+
 .auth-form-pane {
   padding: 32px 34px;
   display: flex;
@@ -4846,7 +4844,7 @@ kbd {
   border-radius: 10px;
 }
 
-/* Tabs Switcher */
+
 .auth-nav-tabs {
   display: flex;
   background: rgba(11, 19, 38, 0.85);
@@ -4886,7 +4884,7 @@ kbd {
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
 }
 
-/* Form Header */
+
 .auth-header {
   margin-bottom: 16px;
 }
@@ -4906,7 +4904,7 @@ kbd {
   line-height: 1.45;
 }
 
-/* Error/Success Alerts */
+
 .auth-alert {
   display: flex;
   align-items: flex-start;
@@ -4931,7 +4929,7 @@ kbd {
   color: #6ee7b7;
 }
 
-/* Form Groups & Inputs */
+
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -5019,7 +5017,7 @@ kbd {
   color: #e2e8f0;
 }
 
-/* Custom Select */
+
 .auth-select {
   width: 100%;
   height: 40px;
@@ -5046,7 +5044,7 @@ kbd {
   outline: none;
 }
 
-/* Password Strength Meter */
+
 .pw-strength-box {
   background: rgba(11, 19, 38, 0.65);
   border: 1px solid rgba(56, 189, 248, 0.14);
@@ -5113,7 +5111,7 @@ kbd {
   color: #10b981;
 }
 
-/* Options Row (Remember me / Forgot pw) */
+
 .auth-options-row {
   display: flex;
   align-items: center;
@@ -5158,7 +5156,7 @@ kbd {
   text-decoration: underline;
 }
 
-/* Main Submit Button */
+
 .auth-submit-btn {
   width: 100%;
   height: 42px;
@@ -5196,7 +5194,7 @@ kbd {
   border-color: #10b981;
 }
 
-/* Demo Accounts Box */
+
 .demo-accounts-box {
   margin-top: 22px;
   padding: 14px;
@@ -5287,7 +5285,7 @@ kbd {
   overflow: hidden;
 }
 
-/* SSO Divider & Buttons */
+
 .auth-divider {
   display: flex;
   align-items: center;
@@ -5338,7 +5336,7 @@ kbd {
   color: #ffffff;
 }
 
-/* Auth Modal (Forgot Password / OTP) */
+
 .auth-modal-overlay {
   position: fixed;
   inset: 0;
@@ -5429,7 +5427,7 @@ kbd {
   cursor: pointer;
 }
 
-/* Animations */
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -5448,7 +5446,7 @@ kbd {
   animation: spin 1s linear infinite;
 }
 
-/* Responsive Auth Layout */
+
 @media (max-width: 980px) {
   .auth-container {
     grid-template-columns: 1fr;
@@ -5477,9 +5475,7 @@ kbd {
   }
 }
 
-/* ==========================================================================
-   GLOBAL SELECT & DROPDOWN PREMIUM STYLES
-   ========================================================================== */
+
 
 select {
   appearance: none;
@@ -5550,7 +5546,7 @@ select optgroup {
   padding: 8px 12px;
 }
 
-/* Select Wrap with Left Icon */
+
 .select-wrap {
   position: relative;
   display: inline-flex;
@@ -5582,7 +5578,7 @@ select optgroup {
   color: #38bdf8;
 }
 
-/* Table Toolbar and Filters */
+
 .table-toolbar {
   display: flex;
   align-items: center;
@@ -5731,7 +5727,7 @@ select optgroup {
   border-color: rgba(96, 165, 250, 0.3);
 }
 
-/* Form Group Select Adjustments */
+
 .form-group select {
   height: 42px;
   padding: 0 36px 0 14px;
@@ -5743,7 +5739,7 @@ select optgroup {
   width: 100%;
 }
 
-/* Primary, Secondary, & Action Buttons */
+
 .primary-btn {
   display: inline-flex;
   align-items: center;
@@ -5815,7 +5811,7 @@ select optgroup {
   color: #ffffff;
 }
 
-/* Status & Role Chips */
+
 .role-chip {
   display: inline-flex;
   align-items: center;
@@ -5835,9 +5831,7 @@ select optgroup {
   color: #e0f2fe;
 }
 
-/* ==========================================================================
-   CUSTOM REACT SELECT DROPDOWN COMPONENT (Pure Glassmorphic UI)
-   ========================================================================== */
+
 
 .custom-select-container {
   position: relative;
@@ -5848,7 +5842,7 @@ select optgroup {
   z-index: 1000;
 }
 
-/* Compact mode: used inside toolbars where width must be constrained */
+
 .toolbar-group .custom-select-container,
 .table-toolbar > .custom-select-container,
 .custom-select-container.toolbar-compact {
@@ -5942,7 +5936,7 @@ select optgroup {
   color: #00d2ff;
 }
 
-/* Glassmorphic Dropdown Menu */
+
 .custom-select-dropdown {
   position: absolute;
   top: calc(100% + 6px);

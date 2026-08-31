@@ -36,7 +36,6 @@ export function CustomSelect({
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Normalize options to SelectOption[]
   const normalizedOptions: SelectOption[] = options.map((opt) => {
     if (typeof opt === 'string') {
       return { value: opt, label: opt };
@@ -54,7 +53,6 @@ export function CustomSelect({
     opt.value.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Close on outside click
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -101,7 +99,7 @@ export function CustomSelect({
       ref={containerRef}
       className={`custom-select-container ${isOpen ? 'is-open' : ''} ${className}`}
     >
-      {/* Trigger Button */}
+      
       <button
         type="button"
         className={`custom-select-trigger ${isOpen ? 'active' : ''}`}
@@ -119,7 +117,7 @@ export function CustomSelect({
         </span>
       </button>
 
-      {/* Dropdown Popup Menu */}
+      
       {isOpen && (
         <div className="custom-select-dropdown glass-dropdown">
           {searchable && normalizedOptions.length > 5 && (

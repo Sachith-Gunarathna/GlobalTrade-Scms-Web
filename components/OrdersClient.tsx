@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   CalendarClock,
   ChevronRight,
@@ -21,7 +21,8 @@ import { StatusBadge } from './StatusBadge';
 import { EmptyState } from './EmptyState';
 import { Modal } from './Modal';
 import { CustomSelect } from './CustomSelect';
-import type { Order, OrderStatus } from '@/types';
+import type { Order, OrderStatus, Supplier } from '@/types';
+import { createOrder, getAllOrders, getAllVendors } from '@/app/services/apiService';
 
 const statuses = ['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
@@ -38,8 +39,8 @@ export function OrdersClient({
   const [selected, setSelected] = useState<Order | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [vendors, setVendors] = useState<Supplier[]>([]);
 
-  // New Order Form State
   const [newOrder, setNewOrder] = useState({
     id: `ORD-${Math.floor(9280 + Math.random() * 800)}`,
     customer: 'Ceylon Export Holdings PLC',
@@ -49,7 +50,22 @@ export function OrdersClient({
     date: new Date().toISOString().split('T')[0],
     region: 'Western Province',
     contact: 'procurement@ceylonexports.lk',
+    vendorId: 0,
   });
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([getAllOrders(), getAllVendors()])
+      .then(([orderData, vendorData]) => {
+        if (!active) return;
+        setOrdersList(orderData);
+        setVendors(vendorData);
+      })
+      .catch((error) => {
+        if (active) showToast(error instanceof Error ? error.message : 'Unable to load orders.');
+      });
+    return () => { active = false; };
+  }, []);
 
   const filtered = useMemo(() => ordersList.filter((o) => {
     const q = query.toLowerCase();
@@ -63,30 +79,39 @@ export function OrdersClient({
     setTimeout(() => setToastMessage(null), 3200);
   };
 
-  const handleCreateOrder = (e: React.FormEvent) => {
+  const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    const created: Order = {
-      ...newOrder,
-      items: Number(newOrder.items),
-      total: Number(newOrder.total),
-    };
-
-    setOrdersList([created, ...ordersList]);
-    setIsAddOpen(false);
-    showToast(`Order ${created.id} for ${created.customer} added successfully!`);
-
-    // Reset with new ID
-    setNewOrder({
-      id: `ORD-${Math.floor(9280 + Math.random() * 800)}`,
-      customer: 'Lanka Industrial Distribution Ltd',
-      items: 12,
-      total: 54000,
-      status: 'Pending',
-      date: new Date().toISOString().split('T')[0],
-      region: 'Central Province',
-      contact: 'orders@lankaindustrial.lk',
-    });
+    try {
+      const created = await createOrder({
+        orderNumber: newOrder.id.trim(),
+        customer: newOrder.customer.trim(),
+        itemCount: Number(newOrder.items),
+        totalAmount: Number(newOrder.total),
+        status: newOrder.status,
+        orderDate: newOrder.date,
+        region: newOrder.region,
+        contact: newOrder.contact.trim(),
+        vendorId: newOrder.vendorId || undefined
+      });
+      setOrdersList((current) => [created, ...current]);
+      setIsAddOpen(false);
+      showToast(`Order ${created.id} for ${created.customer} added successfully.`);
+      setNewOrder({
+        id: `ORD-${Math.floor(9280 + Math.random() * 800)}`,
+        customer: 'Lanka Industrial Distribution Ltd',
+        items: 12,
+        total: 54000,
+        status: 'Pending',
+        date: new Date().toISOString().split('T')[0],
+        region: 'Central Province',
+        contact: 'orders@lankaindustrial.lk',
+        vendorId: newOrder.vendorId
+      });
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to create order.');
+    }
   };
+
 
   return <>
     <PageHeader
@@ -107,7 +132,7 @@ export function OrdersClient({
     <div className="stat-strip glass-panel">
       <div><span>Open orders</span><strong>{ordersList.filter(o => o.status === 'Processing' || o.status === 'Pending').length}</strong><small>12 processing now</small></div>
       <div><span>Total Order value</span><strong>${(ordersList.reduce((s, o) => s + o.total, 0) / 1000000).toFixed(2)}M</strong><small className="positive-text">+9.2% MoM</small></div>
-      <div><span>Avg. order value</span><strong>${Math.round(ordersList.reduce((s, o) => s + o.total, 0) / ordersList.length).toLocaleString()}</strong><small>Last 30 days</small></div>
+      <div><span>Avg. order value</span><strong>${Math.round(ordersList.length ? ordersList.reduce((s, o) => s + o.total, 0) / ordersList.length : 0).toLocaleString()}</strong><small>Last 30 days</small></div>
       <div><span>Fulfillment</span><strong>96.4%</strong><small className="positive-text">Above target</small></div>
     </div>
 
@@ -172,7 +197,7 @@ export function OrdersClient({
       </div>
     </section>
 
-    {/* Selected Order Details Modal */}
+    
     {selected && <Modal title={selected.id} subtitle="Order details" onClose={() => setSelected(null)}>
       <div className="detail-hero">
         <span className="detail-icon"><ShoppingBag size={26}/></span>
@@ -191,7 +216,7 @@ export function OrdersClient({
       </div>
     </Modal>}
 
-    {/* Add Order Modal Form */}
+    
     {isAddOpen && (
       <Modal
         title="Create New Customer Order"
@@ -301,6 +326,16 @@ export function OrdersClient({
             />
           </div>
 
+          <div className="form-group">
+            <label>Supplier Assignment</label>
+            <CustomSelect
+              options={[{ value: '0', label: 'No supplier assigned' }, ...vendors.map((vendor) => ({ value: String(vendor.databaseId ?? 0), label: `${vendor.id} — ${vendor.name}` }))]}
+              value={String(newOrder.vendorId)}
+              onChange={(value) => setNewOrder({ ...newOrder, vendorId: Number(value) })}
+              searchable
+            />
+          </div>
+
           <div className="form-footer">
             <button type="button" className="ghost-btn" onClick={() => setIsAddOpen(false)}>
               Cancel
@@ -313,7 +348,7 @@ export function OrdersClient({
       </Modal>
     )}
 
-    {/* Toast notification */}
+    
     {toastMessage && (
       <div className="toast">
         <CheckCircle2 size={16} />
