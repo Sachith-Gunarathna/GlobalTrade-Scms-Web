@@ -185,7 +185,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
       <div className="auth-ambient-glow-2" />
 
       <div className="auth-container">
-        
+
         <div className="auth-hero-pane">
           <div>
             <Link href="/" className="auth-hero-brand">
@@ -249,9 +249,9 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
           </div>
         </div>
 
-        
+
         <div className="auth-form-pane">
-          
+
           <div className="auth-nav-tabs">
             <button
               type="button"
@@ -277,7 +277,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
             </button>
           </div>
 
-          
+
           <div className="auth-header">
             <h1>{mode === 'login' ? 'Welcome back to SCMS' : 'Create Enterprise Account'}</h1>
             <p>
@@ -287,7 +287,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
             </p>
           </div>
 
-          
+
           {errorMessage && (
             <div className="auth-alert error">
               <AlertCircle size={17} style={{ flexShrink: 0 }} />
@@ -302,7 +302,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
             </div>
           )}
 
-          
+
           {mode === 'login' && (
             <form onSubmit={handleLogin} className="auth-form">
               <div className="auth-input-group">
@@ -372,7 +372,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
             </form>
           )}
 
-          
+
           {mode === 'register' && (
             <form onSubmit={handleRegister} className="auth-form">
               <div className="auth-row-2">
@@ -529,7 +529,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
                 </div>
               </div>
 
-              
+
               {registerPassword && (
                 <div className="pw-strength-box">
                   <div className="pw-strength-bar">

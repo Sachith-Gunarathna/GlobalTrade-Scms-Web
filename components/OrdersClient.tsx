@@ -163,7 +163,7 @@ export function OrdersClient({
     <section className="panel glass-panel data-panel">
       <div className="table-toolbar">
         <div className="toolbar-search">
-          <Search size={16}/>
+          <Search size={16} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search orders or customers..." />
         </div>
         <div className="status-tabs">
@@ -203,36 +203,36 @@ export function OrdersClient({
                 <td><strong className="mono">{o.id}</strong></td>
                 <td>
                   <span className="customer-cell">
-                    <span className="tiny-avatar">{o.customer.slice(0,2).toUpperCase()}</span>
+                    <span className="tiny-avatar">{o.customer.slice(0, 2).toUpperCase()}</span>
                     {o.customer}
                   </span>
                 </td>
                 <td>{o.items} items</td>
                 <td className="value-cell">${o.total.toLocaleString()}</td>
-                <td><StatusBadge status={o.status}/></td>
+                <td><StatusBadge status={o.status} /></td>
                 <td>{new Date(o.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                 <td><span className="region-chip">{o.region}</span></td>
-                <td><ChevronRight size={16} className="row-arrow"/></td>
+                <td><ChevronRight size={16} className="row-arrow" /></td>
               </tr>
             ))}
           </tbody>
         </table>
-        {!filtered.length && <EmptyState title="No orders found"/>}
+        {!filtered.length && <EmptyState title="No orders found" />}
       </div>
     </section>
 
-    
+
     {selected && <Modal title={selected.id} subtitle="Order details" onClose={() => setSelected(null)}>
       <div className="detail-hero">
-        <span className="detail-icon"><ShoppingBag size={26}/></span>
-        <div><StatusBadge status={selected.status}/><h3>{selected.customer}</h3><p>{selected.region} customer account</p></div>
+        <span className="detail-icon"><ShoppingBag size={26} /></span>
+        <div><StatusBadge status={selected.status} /><h3>{selected.customer}</h3><p>{selected.region} customer account</p></div>
         <div className="detail-value"><span>Order total</span><strong>${selected.total.toLocaleString()}</strong></div>
       </div>
       <div className="detail-grid">
-        <div><span><PackageOpen size={14}/> Items</span><strong>{selected.items} line items</strong></div>
-        <div><span><CalendarClock size={14}/> Order date</span><strong>{new Date(selected.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</strong></div>
-        <div><span><UserRound size={14}/> Contact</span><strong>{selected.contact}</strong></div>
-        <div><span><CircleDollarSign size={14}/> Value</span><strong>${selected.total.toLocaleString()}</strong></div>
+        <div><span><PackageOpen size={14} /> Items</span><strong>{selected.items} line items</strong></div>
+        <div><span><CalendarClock size={14} /> Order date</span><strong>{new Date(selected.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</strong></div>
+        <div><span><UserRound size={14} /> Contact</span><strong>{selected.contact}</strong></div>
+        <div><span><CircleDollarSign size={14} /> Value</span><strong>${selected.total.toLocaleString()}</strong></div>
       </div>
       <div className="info-callout">
         <strong>Fulfillment note</strong>
@@ -247,7 +247,7 @@ export function OrdersClient({
       )}
     </Modal>}
 
-    
+
     {isAddOpen && (
       <Modal
         title="Create New Customer Order"
@@ -379,7 +379,7 @@ export function OrdersClient({
       </Modal>
     )}
 
-    
+
     {toastMessage && (
       <div className="toast">
         <CheckCircle2 size={16} />

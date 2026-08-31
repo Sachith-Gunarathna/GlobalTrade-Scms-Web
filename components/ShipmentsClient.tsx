@@ -446,7 +446,7 @@ export function ShipmentsClient({
       </div>
     </section>
 
-    
+
     {selected && <Modal title={`Shipment ${selected.id}`} subtitle={`${selected.origin} → ${selected.destination}`} onClose={() => setSelected(null)}>
       <div className="detail-hero">
         <span className="detail-icon"><Ship size={26} /></span>
