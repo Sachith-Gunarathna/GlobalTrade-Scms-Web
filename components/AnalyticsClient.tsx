@@ -106,9 +106,12 @@ export function AnalyticsClient() {
               />
 
               <Tooltip
-                content={({ active, payload }: { active?: boolean; payload?: { payload: { region: string; shipments: number }; value: number }[] }) => {
+                content={(props: import('recharts').TooltipProps<number, string>) => {
+                  const { active, payload } = props;
                   if (!active || !payload?.length) return null;
-                  const d = payload[0].payload;
+                  const entry = payload[0];
+                  const d = entry.payload as { region: string; shipments: number };
+                  if (!d) return null;
                   const regionColors = ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#f43f5e'];
                   const idx = data.regions.findIndex(r => r.region === d.region);
                   const color = regionColors[idx % regionColors.length];

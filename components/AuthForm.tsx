@@ -45,6 +45,14 @@ const DEPARTMENTS = [
   'Executive Administration'
 ];
 
+const ACCOUNT_ROLES = [
+  { value: 'ADMIN',                 label: 'Admin',                   badge: 'Full Access' },
+  { value: 'LOGISTICS_COORDINATOR', label: 'Logistics Coordinator',   badge: 'Ops' },
+  { value: 'WAREHOUSE_MANAGER',     label: 'Warehouse Manager',       badge: 'WH' },
+  { value: 'CUSTOMS_AGENT',         label: 'Customs Agent',           badge: 'CA' },
+  { value: 'VENDOR_REP',            label: 'Vendor Representative',   badge: 'VR' },
+];
+
 const SRI_LANKA_HUBS = [
   'Port of Colombo HQ (Terminal 1 & 2)',
   'Hambantota International Port Hub',
@@ -75,6 +83,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
   const [organization, setOrganization] = useState('GlobalTrade SCMS Partner Ltd');
   const [department, setDepartment] = useState(DEPARTMENTS[0]);
   const [hub, setHub] = useState(SRI_LANKA_HUBS[0]);
+  const [role, setRole] = useState(ACCOUNT_ROLES[4].value);
   const [registerPassword, setRegisterPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -162,7 +171,7 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
         mobileNumber: phone,
         organizationOrCompany: organization,
         primaryHub: hub,
-        role: 'VENDOR_REP',
+        role,
         department
       });
       setSuccessMessage('Account registered successfully. You can now sign in.');
@@ -475,10 +484,12 @@ export function AuthForm({ initialMode = 'login' }: AuthFormProps) {
                 </div>
                 <div className="auth-input-group">
                   <label className="auth-label">Account Role</label>
-                  <div className="auth-input-wrapper">
-                    <ShieldCheck size={16} className="auth-input-icon" />
-                    <input className="auth-input" value="Vendor Representative" readOnly />
-                  </div>
+                  <CustomSelect
+                    options={ACCOUNT_ROLES}
+                    value={role}
+                    onChange={(val) => setRole(val)}
+                    icon={<ShieldCheck size={15} />}
+                  />
                 </div>
               </div>
 
