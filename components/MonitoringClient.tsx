@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock3,
   Gauge,
+  RadioTower,
   RefreshCw,
   Route,
   Search,
@@ -16,12 +17,12 @@ import {
   Zap
 } from 'lucide-react';
 import { PageHeader } from './PageHeader';
-import { applyRoutePriorities, getMonitoringData, getRoutePriorities } from '@/app/services/apiService';
+import { applyRoutePriorities, getMonitoringData, getRoutePriorities, synchronizeCarrierIntegration } from '@/app/services/apiService';
 import { canAccess } from '@/app/services/roleAccess';
 import { useCurrentUser } from '@/context/AuthContext';
 import type { MonitoringSnapshot } from '@/types';
 
-/* ─── tiny inline helpers ─────────────────────────────────────────── */
+
 
 function fmtDate(val: string | null | undefined) {
   if (!val) return '—';
@@ -53,18 +54,20 @@ function SearchBox({ value, onChange, placeholder }: { value: string; onChange: 
   );
 }
 
-/* ─── main component ──────────────────────────────────────────────── */
+
 
 export function MonitoringClient() {
   const [snapshot, setSnapshot] = useState<MonitoringSnapshot | null>(null);
   const [routes, setRoutes] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
+  const [syncingCarrier, setSyncingCarrier] = useState(false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const user = useCurrentUser();
   const canApplyRoutes = canAccess(user?.role, 'monitoring.routes');
+  const canSyncCarrier = canAccess(user?.role, 'monitoring.integrations');
 
-  /* search states */
+  
   const [timerQ, setTimerQ] = useState('');
   const [metricQ, setMetricQ] = useState('');
   const [auditQ, setAuditQ] = useState('');
@@ -103,7 +106,20 @@ export function MonitoringClient() {
     }
   };
 
-  /* filtered data */
+  const syncCarrier = async () => {
+    setSyncingCarrier(true);
+    try {
+      const result = await synchronizeCarrierIntegration();
+      await load();
+      showToast(`Carrier sync checked ${result.checked} shipments, updated ${result.updated}, failures ${result.failures}.`, result.failures === 0);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to synchronize carrier data.', false);
+    } finally {
+      setSyncingCarrier(false);
+    }
+  };
+
+  
   const filteredTimers = useMemo(() => {
     const q = timerQ.toLowerCase();
     return (snapshot?.timers ?? []).filter(t => !q || t.info.toLowerCase().includes(q));
@@ -128,12 +144,12 @@ export function MonitoringClient() {
     return Object.entries(routes).filter(([id]) => !q || id.toLowerCase().includes(q));
   }, [routes, routeQ]);
 
-  /* success rate */
+  
   const successRate = snapshot?.metrics.length
     ? Math.round((snapshot.metrics.filter(m => m.success).length / snapshot.metrics.length) * 100)
     : null;
 
-  /* ── kpi data ───────────────────────────────────────────────────── */
+  
   const kpis = [
     {
       label: 'Avg Method Time',
@@ -176,6 +192,13 @@ export function MonitoringClient() {
       icon: Route,
       color: 'rose',
       sub: 'Shipments optimised'
+    },
+    {
+      label: 'Carrier Gateway',
+      value: snapshot?.integrations?.healthy ? 'Healthy' : 'Degraded',
+      icon: RadioTower,
+      color: 'emerald',
+      sub: snapshot?.integrations?.outageSimulation ? 'Outage simulation active' : 'Retry adapter online'
     }
   ];
 
@@ -184,13 +207,19 @@ export function MonitoringClient() {
       <PageHeader
         eyebrow="EJB operations"
         title="Monitoring"
-        description="Review timer services, interceptor performance metrics, audit activity, alerts, and route optimisation results."
+        description="Review timer services, carrier integration health, interceptor performance metrics, audit activity, alerts, and route optimisation results."
         action={
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="secondary-btn" type="button" onClick={() => void load()} disabled={loading}>
               <RefreshCw size={14} className={loading ? 'spin' : ''} />
               {loading ? 'Loading…' : 'Refresh'}
             </button>
+            {canSyncCarrier && (
+              <button className="secondary-btn" type="button" onClick={() => void syncCarrier()} disabled={syncingCarrier}>
+                <RadioTower size={14} />
+                {syncingCarrier ? 'Syncing…' : 'Sync Carriers'}
+              </button>
+            )}
             {canApplyRoutes && (
               <button className="primary-btn" type="button" onClick={() => void applyRoutes()} disabled={applying}>
                 <Zap size={14} />
@@ -201,7 +230,7 @@ export function MonitoringClient() {
         }
       />
 
-      {/* ── KPI grid ─────────────────────────────────────────────── */}
+      
       <div className="mon-kpi-grid">
         {kpis.map((kpi) => {
           const Icon = kpi.icon;
@@ -220,7 +249,7 @@ export function MonitoringClient() {
         })}
       </div>
 
-      {/* ── Supply Alerts banner ──────────────────────────────────── */}
+      
       {!loading && snapshot && snapshot.alerts.length > 0 && (
         <div className="mon-alerts-banner glass-panel">
           <div className="mon-alerts-banner-head">
@@ -242,7 +271,7 @@ export function MonitoringClient() {
         </div>
       )}
 
-      {/* ── EJB Timer Service ─────────────────────────────────────── */}
+      
       <section className="glass-panel mon-section">
         <div className="mon-section-head">
           <div className="mon-section-head-left">
@@ -285,7 +314,7 @@ export function MonitoringClient() {
         </div>
       </section>
 
-      {/* ── Interceptor Performance ───────────────────────────────── */}
+      
       <section className="glass-panel mon-section">
         <div className="mon-section-head">
           <div className="mon-section-head-left">
@@ -337,7 +366,7 @@ export function MonitoringClient() {
         )}
       </section>
 
-      {/* ── Audit Trail ───────────────────────────────────────────── */}
+      
       <section className="glass-panel mon-section">
         <div className="mon-section-head">
           <div className="mon-section-head-left">
@@ -385,7 +414,7 @@ export function MonitoringClient() {
         )}
       </section>
 
-      {/* ── Route Optimisation ────────────────────────────────────── */}
+      
       <section className="glass-panel mon-section">
         <div className="mon-section-head">
           <div className="mon-section-head-left">
@@ -433,7 +462,7 @@ export function MonitoringClient() {
         </div>
       </section>
 
-      {/* ── Toast ─────────────────────────────────────────────────── */}
+      
       {toast && (
         <div className={`toast ${toast.ok ? '' : 'toast-error'}`}>
           {toast.ok ? <CheckCircle2 size={16} /> : <XCircle size={16} />}

@@ -6086,9 +6086,9 @@ select optgroup {
 }
 
 
-/* ══════════════════════════════════════════════════════════════════
-   MONITORING PAGE
-══════════════════════════════════════════════════════════════════ */
+
+
+
 
 .mon-root {
   display: flex;
@@ -6096,7 +6096,7 @@ select optgroup {
   gap: 18px;
 }
 
-/* ── KPI grid ─────────────────────────────────────────────────── */
+
 
 .mon-kpi-grid {
   display: grid;
@@ -6194,7 +6194,7 @@ select optgroup {
   color: #49617d;
 }
 
-/* ── Alerts banner ────────────────────────────────────────────── */
+
 
 .mon-alerts-banner {
   border-radius: 14px;
@@ -6296,7 +6296,7 @@ select optgroup {
   border-color: rgba(59, 130, 246, 0.18);
 }
 
-/* ── Section panels ───────────────────────────────────────────── */
+
 
 .mon-section {
   border-radius: 16px;
@@ -6349,7 +6349,7 @@ select optgroup {
 .mon-icon-violet { background: rgba(139, 92, 246, 0.12);  color: #c084fc; }
 .mon-icon-cyan   { background: rgba(0, 210, 255, 0.1);    color: #00d2ff; }
 
-/* ── Search box ───────────────────────────────────────────────── */
+
 
 .mon-search-wrap {
   display: flex;
@@ -6402,7 +6402,7 @@ select optgroup {
   color: #f87171;
 }
 
-/* ── Table extras ─────────────────────────────────────────────── */
+
 
 .mon-section .table-wrap table {
   min-width: 600px;
@@ -6431,7 +6431,7 @@ select optgroup {
   text-align: right;
 }
 
-/* ── Loading row ──────────────────────────────────────────────── */
+
 
 .mon-loading-row {
   display: flex;
@@ -6452,7 +6452,7 @@ select optgroup {
   animation: spin 0.8s linear infinite;
 }
 
-/* ── Inline cell styles ───────────────────────────────────────── */
+
 
 .mon-timer-info {
   font-size: 10.5px;
@@ -6527,7 +6527,7 @@ select optgroup {
   letter-spacing: 0.5px;
 }
 
-/* ── Boolean badge ────────────────────────────────────────────── */
+
 
 .mon-bool-badge {
   display: inline-flex;
@@ -6552,7 +6552,7 @@ select optgroup {
   border-color: rgba(239, 68, 68, 0.18);
 }
 
-/* ── Priority bar ─────────────────────────────────────────────── */
+
 
 .mon-priority-bar-wrap {
   display: flex;
@@ -6603,7 +6603,7 @@ select optgroup {
 .mon-level-medium   { background: rgba(59, 130, 246, 0.1);  color: #60a5fa; border-color: rgba(59, 130, 246, 0.2); }
 .mon-level-low      { background: rgba(16, 185, 129, 0.1);  color: #34d399; border-color: rgba(16, 185, 129, 0.2); }
 
-/* ── Toast error variant ──────────────────────────────────────── */
+
 
 .toast-error {
   border-color: rgba(239, 68, 68, 0.3) !important;
@@ -6614,7 +6614,7 @@ select optgroup {
   color: #f87171;
 }
 
-/* ── Spin animation (used by refresh icon too) ────────────────── */
+
 
 @keyframes spin {
   to { transform: rotate(360deg); }
@@ -6625,9 +6625,9 @@ select optgroup {
 }
 
 
-/* ══════════════════════════════════════════════════════════════════
-   CUSTOMS / TRADE COMPLIANCE PAGE
-══════════════════════════════════════════════════════════════════ */
+
+
+
 
 .cust-root {
   display: flex;
@@ -6635,7 +6635,7 @@ select optgroup {
   gap: 18px;
 }
 
-/* ── KPI row ──────────────────────────────────────────────────── */
+
 
 .cust-kpi-row {
   display: grid;
@@ -6724,7 +6724,7 @@ select optgroup {
   color: #49617d;
 }
 
-/* ── Overdue banner ───────────────────────────────────────────── */
+
 
 .cust-overdue-banner {
   display: flex;
@@ -6742,7 +6742,7 @@ select optgroup {
 .cust-overdue-banner svg { flex: none; color: #f87171; }
 .cust-overdue-banner strong { color: #fca5a5; }
 
-/* ── Table panel ──────────────────────────────────────────────── */
+
 
 .cust-table-panel {
   border-radius: 16px;
@@ -6750,7 +6750,7 @@ select optgroup {
   overflow: hidden;
 }
 
-/* ── Toolbar ──────────────────────────────────────────────────── */
+
 
 .cust-toolbar {
   display: flex;
@@ -6808,7 +6808,7 @@ select optgroup {
 
 .cust-search-clear:hover { color: #f87171; }
 
-/* ── Filter tabs ──────────────────────────────────────────────── */
+
 
 .cust-filter-tabs {
   display: flex;
@@ -6858,7 +6858,7 @@ select optgroup {
   color: #93c5fd;
 }
 
-/* ── Table overrides ──────────────────────────────────────────── */
+
 
 .cust-table-panel .table-wrap table { min-width: 780px; }
 
@@ -6876,7 +6876,7 @@ select optgroup {
   text-align: right;
 }
 
-/* ── Empty state ──────────────────────────────────────────────── */
+
 
 .cust-empty {
   display: flex;
@@ -6891,7 +6891,7 @@ select optgroup {
 .cust-empty strong { font-size: 13px; color: #5a6e88; }
 .cust-empty span { font-size: 11px; color: #3a4f66; }
 
-/* ── Loading row ──────────────────────────────────────────────── */
+
 
 .cust-loading-row {
   display: flex;
@@ -6912,7 +6912,7 @@ select optgroup {
   animation: spin 0.8s linear infinite;
 }
 
-/* ── Cell styles ──────────────────────────────────────────────── */
+
 
 .cust-doc-cell {
   display: flex;
@@ -6985,7 +6985,7 @@ select optgroup {
 
 .cust-deadline-overdue svg { color: #f87171; }
 
-/* ── Status badge ─────────────────────────────────────────────── */
+
 
 .cust-status-badge {
   display: inline-flex;
@@ -7023,7 +7023,7 @@ select optgroup {
   border-color: rgba(56, 189, 248, 0.2);
 }
 
-/* ── Action buttons ───────────────────────────────────────────── */
+
 
 .cust-actions {
   display: flex;
@@ -7091,7 +7091,7 @@ select optgroup {
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
 }
 
-/* ── Create form extras ───────────────────────────────────────── */
+
 
 .cust-form {
   display: flex;
@@ -7100,12 +7100,12 @@ select optgroup {
 }
 
 
-/* ══════════════════════════════════════════════════════════════════
-   SEARCH BOX — ANIMATED ICON SWITCH (Search ↔ XCircle)
-   Used by: Monitoring page, Customs page
-══════════════════════════════════════════════════════════════════ */
 
-/* ── Monitoring variant ───────────────────────────────────────── */
+
+
+
+
+
 
 .mon-search-icon-btn {
   position: relative;
@@ -7127,7 +7127,7 @@ select optgroup {
   transition: opacity 0.18s ease, transform 0.22s ease;
 }
 
-/* default: search visible, clear hidden */
+
 .mon-search-icon-btn .mon-icon-search {
   opacity: 1;
   transform: scale(1) rotate(0deg);
@@ -7137,7 +7137,7 @@ select optgroup {
   transform: scale(0.5) rotate(-90deg);
 }
 
-/* when value present: clear visible, search hidden */
+
 .mon-search-icon-btn.mon-search-icon-active {
   cursor: pointer;
   color: #60a5fa;
@@ -7154,7 +7154,7 @@ select optgroup {
   color: #f87171;
 }
 
-/* ── Customs variant ──────────────────────────────────────────── */
+
 
 .cust-search-icon-btn {
   position: relative;
@@ -7176,7 +7176,7 @@ select optgroup {
   transition: opacity 0.18s ease, transform 0.22s ease;
 }
 
-/* default: search visible, clear hidden */
+
 .cust-search-icon-btn .cust-icon-search {
   opacity: 1;
   transform: scale(1) rotate(0deg);
@@ -7186,7 +7186,7 @@ select optgroup {
   transform: scale(0.5) rotate(-90deg);
 }
 
-/* when value present: clear visible, search hidden */
+
 .cust-search-icon-btn.cust-search-icon-active {
   cursor: pointer;
   color: #60a5fa;

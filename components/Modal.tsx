@@ -8,7 +8,7 @@ export function Modal({ title, subtitle, onClose, children }: { title: string; s
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // Only close on Escape if the active element is NOT an input/textarea/select
+      
       const tag = (e.target as HTMLElement).tagName;
       if (e.key === 'Escape' && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
         onClose();
@@ -26,7 +26,7 @@ export function Modal({ title, subtitle, onClose, children }: { title: string; s
     <div
       className="modal-backdrop"
       onClick={(e) => {
-        // Close only when clicking the backdrop itself, not modal content
+        
         if (e.target === e.currentTarget) onClose();
       }}
     >

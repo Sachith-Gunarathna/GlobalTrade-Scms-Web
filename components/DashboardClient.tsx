@@ -348,7 +348,7 @@ export function DashboardClient() {
               <span className="section-label">Shipment monitoring</span>
               <h2>Shipment status overview</h2>
             </div>
-            {/* colour legend */}
+            
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
               {shipmentStatusData.map((d) => (
                 <span key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#7a90aa', fontWeight: 600 }}>

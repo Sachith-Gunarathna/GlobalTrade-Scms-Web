@@ -264,6 +264,10 @@ export async function applyRoutePriorities() {
   return request<{ updated: number }>('/monitoring/routes/apply', { method: 'POST' });
 }
 
+export async function synchronizeCarrierIntegration() {
+  return request<{ checked: number; updated: number; failures: number; healthy: boolean }>('/monitoring/integrations/carriers/sync', { method: 'POST' });
+}
+
 export async function getUserPreferences(userEmail: string) {
   return request<{ success: boolean; preferences: Record<string, unknown> }>(`/users/${encodeURIComponent(userEmail)}/preferences`);
 }

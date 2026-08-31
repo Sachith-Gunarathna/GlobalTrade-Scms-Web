@@ -32,7 +32,7 @@ import { canAccess } from '@/app/services/roleAccess';
 import { useCurrentUser } from '@/context/AuthContext';
 import type { CustomsDocument, Shipment } from '@/types';
 
-/* ── helpers ─────────────────────────────────────────────────────── */
+
 
 const emptyForm = {
   documentNumber: '',
@@ -67,7 +67,7 @@ function getStatusConfig(status: string) {
   return { cls: 'cust-status-pending', icon: <Clock size={11} />, dot: '#38bdf8' };
 }
 
-/* ── component ───────────────────────────────────────────────────── */
+
 
 export function CustomsClient() {
   const [documents, setDocuments] = useState<CustomsDocument[]>([]);
@@ -104,7 +104,7 @@ export function CustomsClient() {
 
   useEffect(() => { void load(); }, []);
 
-  /* KPI counts */
+  
   const kpiCounts = useMemo(() => ({
     total: documents.length,
     pending: documents.filter((d) => !['Approved', 'Released', 'Rejected'].includes(d.status)).length,
@@ -113,7 +113,7 @@ export function CustomsClient() {
     overdue: documents.filter((d) => isOverdue(d.deadline) && !['Approved', 'Released', 'Rejected'].includes(d.status)).length,
   }), [documents]);
 
-  /* filtered list */
+  
   const filtered = useMemo(() => {
     const q = searchQ.toLowerCase();
     return documents.filter((doc) => {
@@ -192,7 +192,7 @@ export function CustomsClient() {
         }
       />
 
-      {/* ── KPI strip ─────────────────────────────────────────────── */}
+      
       <div className="cust-kpi-row">
         <article className="cust-kpi glass-panel cust-kpi-blue">
           <div className="cust-kpi-icon"><FileCheck2 size={18} /></div>
@@ -236,7 +236,7 @@ export function CustomsClient() {
         </article>
       </div>
 
-      {/* ── Overdue warning banner ─────────────────────────────────── */}
+      
       {!loading && kpiCounts.overdue > 0 && (
         <div className="cust-overdue-banner">
           <AlertTriangle size={15} />
@@ -247,10 +247,10 @@ export function CustomsClient() {
         </div>
       )}
 
-      {/* ── Table panel ───────────────────────────────────────────── */}
+      
       <section className="glass-panel cust-table-panel">
 
-        {/* toolbar */}
+        
         <div className="cust-toolbar">
           <div className="cust-search-wrap">
             <button
@@ -291,7 +291,7 @@ export function CustomsClient() {
           </div>
         </div>
 
-        {/* table */}
+        
         <div className="table-wrap">
           <table>
             <thead>
@@ -330,7 +330,7 @@ export function CustomsClient() {
                 const busy = busyId === doc.id;
                 return (
                   <tr key={doc.id} className={overdue ? 'cust-row-overdue' : ''}>
-                    {/* Document */}
+                    
                     <td>
                       <div className="cust-doc-cell">
                         <span className="cust-doc-icon"><FileText size={14} /></span>
@@ -340,7 +340,7 @@ export function CustomsClient() {
                         </div>
                       </div>
                     </td>
-                    {/* Shipment */}
+                    
                     <td>
                       {doc.trackingNumber || doc.shipmentId ? (
                         <div className="cust-tracking-cell">
@@ -352,25 +352,25 @@ export function CustomsClient() {
                         </div>
                       ) : '—'}
                     </td>
-                    {/* Type */}
+                    
                     <td>
                       <span className="cust-type-tag">{doc.documentType}</span>
                     </td>
-                    {/* Deadline */}
+                    
                     <td>
                       <div className={`cust-deadline-cell ${overdue ? 'cust-deadline-overdue' : ''}`}>
                         {overdue && <AlertTriangle size={11} />}
                         <span>{fmtDate(doc.deadline)}</span>
                       </div>
                     </td>
-                    {/* Status */}
+                    
                     <td>
                       <span className={`cust-status-badge ${cfg.cls}`}>
                         {cfg.icon}
                         {doc.status}
                       </span>
                     </td>
-                    {/* Actions */}
+                    
                     {canDecide && (
                       <td>
                         <div className="cust-actions">
@@ -422,7 +422,7 @@ export function CustomsClient() {
         )}
       </section>
 
-      {/* ── Create modal ──────────────────────────────────────────── */}
+      
       {canCreate && formOpen && (
         <Modal
           onClose={() => setFormOpen(false)}
@@ -499,7 +499,7 @@ export function CustomsClient() {
         </Modal>
       )}
 
-      {/* ── Toast ─────────────────────────────────────────────────── */}
+      
       {toast && (
         <div className={`toast ${toast.ok ? '' : 'toast-error'}`}>
           {toast.ok ? <CheckCircle2 size={16} /> : <XCircle size={16} />}

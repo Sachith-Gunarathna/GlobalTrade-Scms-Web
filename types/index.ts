@@ -191,6 +191,13 @@ export type MonitoringSnapshot = {
   audit: AuditEntry[];
   alerts: SupplyAlert[];
   timers: TimerSnapshot[];
+  integrations: {
+    adapter: string;
+    mode: string;
+    maxAttempts: number;
+    outageSimulation: boolean;
+    healthy: boolean;
+  };
 };
 
 export type AnalyticsResponse = {

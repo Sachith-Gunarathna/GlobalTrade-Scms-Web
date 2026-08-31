@@ -23,6 +23,7 @@ export type Permission =
   | 'analytics.view'
   | 'monitoring.view'
   | 'monitoring.routes'
+  | 'monitoring.integrations'
   | 'settings.view';
 
 const permissions: Record<RoleCode, Permission[]> = {
@@ -30,13 +31,13 @@ const permissions: Record<RoleCode, Permission[]> = {
     'dashboard.view','shipments.view','shipments.create','shipments.status','shipments.delete',
     'orders.view','orders.create','orders.status','inventory.view','inventory.create','inventory.adjust','inventory.delete',
     'suppliers.view','suppliers.create','suppliers.score','suppliers.delete','customs.view','customs.create','customs.decision',
-    'analytics.view','monitoring.view','monitoring.routes','settings.view'
+    'analytics.view','monitoring.view','monitoring.routes','monitoring.integrations','settings.view'
   ],
   LOGISTICS_COORDINATOR: [
     'dashboard.view','shipments.view','shipments.create','shipments.status','shipments.delete',
     'orders.view','orders.create','orders.status','inventory.view','inventory.create','inventory.adjust',
     'suppliers.view','suppliers.create','suppliers.score','suppliers.delete','customs.view','customs.create',
-    'analytics.view','monitoring.view','monitoring.routes'
+    'analytics.view','monitoring.view','monitoring.routes','monitoring.integrations'
   ],
   WAREHOUSE_MANAGER: [
     'dashboard.view','shipments.view','orders.view','inventory.view','inventory.create','inventory.adjust','inventory.delete',
